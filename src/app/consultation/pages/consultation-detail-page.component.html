@@ -1,0 +1,73 @@
+<section class="page detail-page">
+  <a class="back-link" [routerLink]="sessionRole === 'PROFESSIONAL' ? ['/consultation/professional'] : ['/consultation']">
+    <span aria-hidden="true">←</span> Volver al historial
+  </a>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">REGISTRO CLÍNICO</p>
+      <h1 class="page-title">Detalle de consulta</h1>
+      <p class="page-subtitle">Información de la cita, preconsulta y atención profesional asociada.</p>
+    </div>
+    @if (appointment(); as item) {
+      <span class="badge" [class.badge--completed]="item.status === 'COMPLETED'" [class.badge--confirmed]="item.status === 'CONFIRMED'" [class.badge--rescheduled]="item.status === 'RESCHEDULED'" [class.badge--cancelled]="item.status === 'CANCELLED'" [class.badge--no-show]="item.status === 'NO_SHOW'">{{ statusLabel(item.status) }}</span>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="state-card"><span class="spinner"></span><span>Cargando consulta…</span></div>
+  } @else if (error(); as message) {
+    <div class="state-card state-card--error" role="alert"><div><strong>No fue posible abrir la consulta.</strong><p>{{ message }}</p></div><a class="btn btn--secondary" [routerLink]="sessionRole === 'PROFESSIONAL' ? ['/consultation/professional'] : ['/consultation']">Volver</a></div>
+  } @else if (appointment(); as item) {
+    <section class="appointment-overview">
+      <div class="overview-icon" aria-hidden="true">✚</div>
+      <div class="overview-main">
+        <span class="eyebrow">CITA #{{ item.id }}</span>
+        <h2>Consulta médica</h2>
+        <p>{{ item.start | date:'EEEE, d MMMM y · HH:mm' }} – {{ item.end | date:'HH:mm' }}</p>
+      </div>
+      <div class="overview-meta">
+        <span>Paciente</span><strong>#{{ item.patientId }}</strong>
+        <span>Profesional</span><strong>#{{ item.professionalId }}</strong>
+      </div>
+    </section>
+
+    @if (canStartAttention) {
+      <div class="detail-action"><a class="btn btn--primary" [routerLink]="['/consultation/professional', item.id, 'attention']">Registrar atención médica</a></div>
+    }
+
+    @if (summaryLoading()) { <div class="state-card"><span class="spinner"></span><span>Cargando resúmenes…</span></div> }
+    @if (summaryNotice(); as notice) { <div class="notice-banner"><span aria-hidden="true">ⓘ</span><p>{{ notice }}</p></div> }
+
+    <div class="detail-grid">
+      <article class="detail-panel">
+        <header class="detail-panel__header"><span class="panel-icon panel-icon--blue">01</span><div><p class="eyebrow">INFORMACIÓN DEL PACIENTE</p><h2>Preconsulta</h2></div></header>
+        @if (preconsultation(); as pre) {
+          <dl class="summary-list">
+            <div><dt>Motivo de consulta</dt><dd>{{ pre.consultationReason || 'No registrado' }}</dd></div>
+            <div><dt>Tiempo de evolución</dt><dd>{{ pre.evolutionTime || 'No registrado' }}</dd></div>
+            <div><dt>Síntomas detallados</dt><dd>{{ pre.detailedSymptoms || 'No registrado' }}</dd></div>
+            <div><dt>Antecedentes relevantes</dt><dd>{{ pre.relevantHistory || 'No registrados' }}</dd></div>
+          </dl>
+        } @else { <p class="muted-copy">No hay un resumen de preconsulta disponible para esta cita.</p> }
+      </article>
+
+      <article class="detail-panel">
+        <header class="detail-panel__header"><span class="panel-icon panel-icon--green">02</span><div><p class="eyebrow">INFORMACIÓN PROFESIONAL</p><h2>Atención médica</h2></div></header>
+        @if (postSummary()?.attentionSummary; as attention) {
+          <dl class="summary-list">
+            <div><dt>Diagnóstico</dt><dd>{{ attention.diagnosis || 'No registrado' }}</dd></div>
+            <div><dt>Recomendaciones</dt><dd>{{ attention.recommendations || 'No registradas' }}</dd></div>
+            <div><dt>Medicamentos</dt><dd class="preserve-lines">{{ attention.medications || 'No registrados' }}</dd></div>
+            <div><dt>Observaciones</dt><dd class="preserve-lines">{{ attention.observations || 'Sin observaciones' }}</dd></div>
+            <div><dt>Remisión</dt><dd>{{ attention.referral || 'No se registró remisión' }}</dd></div>
+          </dl>
+        } @else { <p class="muted-copy">La atención profesional todavía no está disponible en el resumen posterior.</p> }
+      </article>
+    </div>
+
+    @if (postSummary(); as summary) {
+      <div class="summary-footer"><span>Resumen posterior generado</span><strong>{{ summary.generatedAt | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+    }
+    <p class="clinical-note">Este portal presenta información registrada por el profesional. No genera diagnósticos ni recomendaciones clínicas automáticas.</p>
+  }
+</section>

@@ -1,0 +1,38 @@
+<section class="page professional-page">
+  <header class="page-header">
+    <div><p class="eyebrow">ÁREA PROFESIONAL</p><h1 class="page-title">Consultas asignadas</h1><p class="page-subtitle">Revisa las citas de tu agenda y registra la atención médica correspondiente.</p></div>
+    <div class="professional-summary"><span class="professional-summary__avatar" aria-hidden="true">✚</span><div><span class="eyebrow">PROFESIONAL</span><strong>{{ professionalName }}</strong><small>Consultas de hoy: {{ todayCount() }}</small></div></div>
+  </header>
+
+  <nav class="queue-tabs" aria-label="Filtrar consultas">
+    <button type="button" [class.is-active]="filter() === 'TO_ATTEND'" (click)="setFilter('TO_ATTEND')">Por atender <span>{{ counts().TO_ATTEND }}</span></button>
+    <button type="button" [class.is-active]="filter() === 'COMPLETED'" (click)="setFilter('COMPLETED')">Completadas <span>{{ counts().COMPLETED }}</span></button>
+    <button type="button" [class.is-active]="filter() === 'ALL'" (click)="setFilter('ALL')">Todas <span>{{ counts().ALL }}</span></button>
+  </nav>
+
+  @if (loading()) {
+    <div class="state-card"><span class="spinner"></span><span>Cargando agenda profesional…</span></div>
+  } @else if (error(); as message) {
+    <div class="state-card state-card--error" role="alert"><div><strong>No fue posible cargar las consultas asignadas.</strong><p>{{ message }}</p></div><button class="btn btn--secondary" type="button" (click)="load()">Reintentar</button></div>
+  } @else if (filteredAppointments().length === 0) {
+    <div class="empty-state"><div class="empty-state__icon" aria-hidden="true">▦</div><h2>No hay consultas en esta categoría</h2><p>Las citas asignadas aparecerán aquí cuando el Appointment API las devuelva para tu usuario profesional.</p></div>
+  } @else {
+    <div class="assigned-list">
+      @for (item of filteredAppointments(); track item.id) {
+        <article class="assigned-card">
+          <div class="assigned-card__date"><strong>{{ item.start | date:'d' }}</strong><span>{{ item.start | date:'MMM' }}</span></div>
+          <div class="assigned-card__content">
+            <div class="assigned-card__title-row"><span class="eyebrow">CITA #{{ item.id }}</span><span class="badge" [class.badge--completed]="item.status === 'COMPLETED'" [class.badge--confirmed]="item.status === 'CONFIRMED'" [class.badge--rescheduled]="item.status === 'RESCHEDULED'" [class.badge--cancelled]="item.status === 'CANCELLED'" [class.badge--no-show]="item.status === 'NO_SHOW'">{{ statusLabel(item.status) }}</span></div>
+            <h2>Paciente #{{ item.patientId }}</h2>
+            <p class="assigned-card__time"><span aria-hidden="true">◷</span>{{ item.start | date:'dd/MM/yyyy · HH:mm' }} – {{ item.end | date:'HH:mm' }}</p>
+            @if (item.preconsultationSummaryId !== null) { <p class="preconsult-state preconsult-state--available"><span aria-hidden="true">✓</span> Preconsulta disponible · ref. #{{ item.preconsultationSummaryId }}</p> } @else { <p class="preconsult-state"><span aria-hidden="true">ⓘ</span> No hay referencia de preconsulta asociada</p> }
+          </div>
+          <div class="assigned-card__actions">
+            @if (item.preconsultationSummaryId !== null) { <a class="btn btn--secondary" [routerLink]="['/consultation/detail', item.id]">Ver preconsulta</a> }
+            @if (canStart(item)) { <a class="btn btn--primary" [routerLink]="['/consultation/professional', item.id, 'attention']">Iniciar atención</a> } @else { <span class="inline-hint">La cita no está disponible para iniciar atención.</span> }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
