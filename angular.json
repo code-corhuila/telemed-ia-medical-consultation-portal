@@ -1,0 +1,111 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "projects": {
+    "telemed-ia-medical-consultation-portal": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "telemed-ia-medical-consultation-portal:esbuild",
+            "outputPath": "dist/telemed-ia-medical-consultation-portal"
+          },
+          "configurations": {
+            "production": {
+              "target": "telemed-ia-medical-consultation-portal:esbuild:production"
+            },
+            "development": {
+              "target": "telemed-ia-medical-consultation-portal:esbuild:development",
+              "dev": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "esbuild": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/telemed-ia-medical-consultation-portal",
+            "browser": "src/bootstrap.ts",
+            "index": "src/index.html",
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": ["src/styles.css"],
+            "externalDependencies": [
+              "shell/apiClient",
+              "shell/session",
+              "shell/apiError"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "sourceMap": false,
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            },
+            "mock": {
+              "optimization": false,
+              "sourceMap": true,
+              "browser": "src/main.ts",
+              "tsConfig": "tsconfig.mock.json",
+              "externalDependencies": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "telemed-ia-medical-consultation-portal:serve-original:development",
+            "rebuildDelay": 500,
+            "dev": true,
+            "port": 4205
+          }
+        },
+        "serve-original": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4205
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "telemed-ia-medical-consultation-portal:esbuild:production"
+            },
+            "development": {
+              "buildTarget": "telemed-ia-medical-consultation-portal:esbuild:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "serve-mock": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4205,
+            "buildTarget": "telemed-ia-medical-consultation-portal:esbuild:mock"
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "buildTarget": "telemed-ia-medical-consultation-portal:esbuild:development"
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": false
+  }
+}
