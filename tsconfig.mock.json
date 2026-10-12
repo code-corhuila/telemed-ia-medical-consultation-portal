@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "shell/apiClient": ["src/mocks/mock-api-client.service.ts"],
+      "shell/session": ["src/mocks/mock-session.service.ts"],
+      "shell/apiError": ["src/mocks/mock-api-error.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}
