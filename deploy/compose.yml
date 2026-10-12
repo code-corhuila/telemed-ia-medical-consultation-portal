@@ -1,0 +1,17 @@
+name: telemed-ia-medical-consultation-portal
+services:
+  consultation-portal:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: telemed-ia-medical-consultation-portal:local
+    container_name: telemed-ia-medical-consultation-portal
+    restart: unless-stopped
+    ports:
+      - "4205:80"
+    networks:
+      - platform
+networks:
+  platform:
+    external: true
+    name: platform

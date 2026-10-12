@@ -1,0 +1,68 @@
+<section class="page consultations-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">HISTORIAL CLÍNICO</p>
+      <h1 class="page-title">Mis consultas médicas</h1>
+      <p class="page-subtitle">Consulta los registros de atención y los resúmenes de tus citas finalizadas.</p>
+    </div>
+    <div class="header-stat">
+      <span class="header-stat__value">{{ counts().ALL }}</span>
+      <span class="header-stat__label">CONSULTAS FINALIZADAS</span>
+    </div>
+  </header>
+
+  <nav class="filter-tabs" aria-label="Filtrar historial">
+    <button type="button" [class.is-active]="filter() === 'ALL'" (click)="setFilter('ALL')">
+      Todas <span>{{ counts().ALL }}</span>
+    </button>
+    <button type="button" [class.is-active]="filter() === 'AVAILABLE'" (click)="setFilter('AVAILABLE')">
+      Con resumen <span>{{ counts().AVAILABLE }}</span>
+    </button>
+    <button type="button" [class.is-active]="filter() === 'PENDING'" (click)="setFilter('PENDING')">
+      Resumen pendiente <span>{{ counts().PENDING }}</span>
+    </button>
+  </nav>
+
+  @if (loading()) {
+    <div class="state-card"><span class="spinner" aria-hidden="true"></span><span>Cargando tu historial…</span></div>
+  } @else if (error(); as message) {
+    <div class="state-card state-card--error" role="alert">
+      <div><strong>No fue posible cargar las consultas.</strong><p>{{ message }}</p></div>
+      <button type="button" class="btn btn--secondary" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (filteredAppointments().length === 0) {
+    <div class="empty-state">
+      <div class="empty-state__icon" aria-hidden="true">▤</div>
+      <h2>Aún no hay consultas en esta categoría</h2>
+      <p>Cuando una cita haya sido finalizada, la consulta aparecerá aquí. Los resúmenes se muestran cuando el servicio los haya generado.</p>
+    </div>
+  } @else {
+    <div class="consultation-list">
+      @for (appointment of filteredAppointments(); track appointment.id) {
+        <article class="consultation-card">
+          <div class="consultation-card__icon" aria-hidden="true">✚</div>
+          <div class="consultation-card__main">
+            <div class="consultation-card__topline">
+              <span class="eyebrow">CITA #{{ appointment.id }}</span>
+              <span class="badge badge--completed">COMPLETADA</span>
+            </div>
+            <h2>Consulta médica</h2>
+            <p class="consultation-card__date">
+              <span aria-hidden="true">▦</span>
+              {{ appointment.start | date:'EEEE, d MMMM y · HH:mm' }}
+            </p>
+            <p class="consultation-card__metadata">Profesional asignado #{{ appointment.professionalId }}</p>
+          </div>
+          <div class="consultation-card__actions">
+            @if (appointment.postSummaryId !== null) {
+              <a class="btn btn--primary" [routerLink]="['/consultation/detail', appointment.id]">Ver consulta</a>
+            } @else {
+              <a class="btn btn--secondary" [routerLink]="['/consultation/detail', appointment.id]">Ver detalles</a>
+              <span class="inline-hint">Resumen pendiente</span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
