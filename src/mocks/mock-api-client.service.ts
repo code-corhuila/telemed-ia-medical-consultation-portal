@@ -55,7 +55,7 @@ export class ApiClientService {
     const byPatient = path.match(/^\/appointments\/patient\/(\d+)/);
     if (byPatient) {
       const patientId = Number(byPatient[1]);
-      const items = MOCK_APPOINTMENTS.filter((a) => a.patientId === patientId);
+      const items = MOCK_APPOINTMENTS.filter((a) => a.patientId === String(patientId));
       return makePage(
         items,
         this.asNumber(params?.['page'], 1),
@@ -67,7 +67,7 @@ export class ApiClientService {
     const byProfessional = path.match(/^\/appointments\/professional\/(\d+)/);
     if (byProfessional) {
       const professionalId = Number(byProfessional[1]);
-      const items = MOCK_APPOINTMENTS.filter((a) => a.professionalId === professionalId);
+      const items = MOCK_APPOINTMENTS.filter((a) => a.professionalId === String(professionalId));
       return makePage(
         items,
         this.asNumber(params?.['page'], 1),
@@ -111,7 +111,7 @@ export class ApiClientService {
   }
 
   private createAttention(payload: CreateAttentionPayload): AttentionSummary {
-    const nextId = Math.max(0, ...Object.keys(MOCK_ATTENTIONS).map(Number)) + 1;
+    const nextId = 'f0000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0'); // Generación rápida de UUID falso 'f0000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0'); // Generación rápida de UUID falso Math.max(0, ...Object.keys(MOCK_ATTENTIONS).map(Number)) + 1;
     const created: AttentionSummary = {
       id: nextId,
       diagnosis: payload.diagnosis,
@@ -120,7 +120,7 @@ export class ApiClientService {
       observations: payload.observations,
       referral: payload.referral,
     };
-    MOCK_ATTENTIONS[nextId] = created;
+    MOCK_ATTENTIONS[nextId as any] = created;
     return created;
   }
 

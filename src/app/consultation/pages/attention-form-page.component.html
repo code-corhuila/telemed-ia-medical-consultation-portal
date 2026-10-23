@@ -7,6 +7,33 @@
   @else if (appointment(); as item) {
     <section class="appointment-strip"><div class="appointment-strip__icon" aria-hidden="true">✚</div><div><span class="eyebrow">CITA #{{ item.id }}</span><strong>Paciente #{{ item.patientId }}</strong><p>{{ item.start | date:'dd/MM/yyyy · HH:mm' }} – {{ item.end | date:'HH:mm' }}</p></div><span class="badge" [class.badge--confirmed]="item.status === 'CONFIRMED'" [class.badge--rescheduled]="item.status === 'RESCHEDULED'">{{ item.status === 'RESCHEDULED' ? 'REPROGRAMADA' : 'CONFIRMADA' }}</span></section>
 
+    <!-- Tarjeta de Preconsulta (Agente IA) -->
+    <div class="preconsultation-card" style="margin: 1.5rem 0; padding: 1.25rem; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 6px;">
+      <h3 style="margin: 0 0 1rem; color: #1e293b; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span aria-hidden="true">🤖</span> Resumen del Agente IA
+      </h3>
+      
+      @if (preconsultationLoading()) {
+        <p style="color: #64748b; font-size: 0.9rem; margin: 0;">Cargando resumen del paciente...</p>
+      } @else if (preconsultationError(); as err) {
+        <p style="color: #b45309; font-size: 0.9rem; margin: 0; font-weight: 500;">{{ err }}</p>
+      } @else if (preconsultationData(); as summary) {
+        <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.9rem; color: #334155;">
+          <p style="margin: 0;"><strong>Motivo:</strong> {{ summary.consultationReason }}</p>
+          
+          @if (summary.evolutionTime) {
+            <p style="margin: 0;"><strong>Tiempo de evolución:</strong> {{ summary.evolutionTime }}</p>
+          }
+          
+          <p style="margin: 0;"><strong>Síntomas:</strong> {{ summary.detailedSymptoms }}</p>
+          
+          @if (summary.relevantHistory) {
+            <p style="margin: 0;"><strong>Antecedentes:</strong> {{ summary.relevantHistory }}</p>
+          }
+        </div>
+      }
+    </div>
+
     @if (savedAttention(); as saved) {
       <section class="success-card" role="status"><div class="success-card__icon" aria-hidden="true">✓</div><div><h2>Atención guardada</h2><p>Se registró el resumen de atención #{{ saved.id }} para la cita #{{ item.id }}.</p><p class="success-card__note">La API actual no expone todavía una operación de finalización HU-14. Por eso esta pantalla no marca la cita como COMPLETADA ni genera el resumen posterior automáticamente.</p><button class="btn btn--primary" type="button" (click)="backToAgenda()">Volver a consultas asignadas</button></div></section>
     } @else {
