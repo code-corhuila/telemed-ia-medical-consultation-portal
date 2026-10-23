@@ -47,7 +47,7 @@ export class ConsultationDetailPageComponent implements OnInit {
 
     request.subscribe({
       next: (page) => {
-        const item = page.data.find((candidate) => candidate.id === appointmentId);
+        const item = page.data.find((candidate) => candidate.id === String(appointmentId));
         if (!item) {
           this.error.set('No se encontró la cita en tu historial autorizado.');
           this.loading.set(false);
@@ -67,7 +67,7 @@ export class ConsultationDetailPageComponent implements OnInit {
   private loadSummaries(appointment: Appointment): void {
     if (appointment.postSummaryId !== null) {
       this.summaryLoading.set(true);
-      this.api.getPostSummary(appointment.postSummaryId).subscribe({
+      this.api.getPostSummary(appointment.postSummaryId as string).subscribe({
         next: (summary) => {
           this.postSummary.set(summary);
           this.preconsultation.set(summary.preconsultationSummary ?? null);
@@ -90,8 +90,8 @@ export class ConsultationDetailPageComponent implements OnInit {
     }
   }
 
-  private loadPreconsultation(id: number): void {
-    this.api.getPreconsultation(id).subscribe({
+  private loadPreconsultation(id: string): void {
+    this.api.getPreconsultation(id as string).subscribe({
       next: (summary) => this.preconsultation.set(summary),
       error: (error) => this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar el resumen de preconsulta.')),
     });
