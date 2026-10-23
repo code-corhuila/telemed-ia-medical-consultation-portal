@@ -1,14 +1,14 @@
 export type AppointmentStatus = 'CONFIRMED' | 'RESCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
 export interface Appointment {
-  id: number;
-  patientId: number;
-  professionalId: number;
+  id: string;
+  patientId: string;
+  professionalId: string;
   start: string;
   end: string;
   status: AppointmentStatus;
-  preconsultationSummaryId: number | null;
-  postSummaryId: number | null;
+  preconsultationSummaryId: string | null;
+  postSummaryId: string | null;
   cancellationReason?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -27,15 +27,19 @@ export interface ApiPage<T> {
 }
 
 export interface PreconsultationSummary {
-  id: number;
+  id: string;
+  conversationId: string;
+  appointmentId: string;
+  patientId: string;
   consultationReason: string;
-  evolutionTime?: string;
+  evolutionTime: string | null;
   detailedSymptoms: string;
-  relevantHistory?: string;
+  relevantHistory: string | null;
+  createdAt: string;
 }
 
 export interface AttentionSummary {
-  id: number;
+  id: string;
   diagnosis: string;
   recommendations: string;
   medications?: string;
@@ -44,7 +48,7 @@ export interface AttentionSummary {
 }
 
 export interface PostConsultationSummary {
-  id: number;
+  id: string;
   preconsultationSummary?: PreconsultationSummary;
   attentionSummary?: AttentionSummary;
   generatedAt: string;
@@ -52,7 +56,7 @@ export interface PostConsultationSummary {
 
 /** This shape follows consultation-service.yaml as published in governance. */
 export interface CreateAttentionPayload {
-  appointmentId: number;
+  appointmentId: string;
   diagnosis: string;
   recommendations: string;
   medications?: string;

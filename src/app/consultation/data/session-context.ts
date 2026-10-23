@@ -1,7 +1,7 @@
 import { SessionService } from 'shell/session';
 
 export interface SessionContext {
-  readonly id: number | null;
+  readonly id: string | null;
   readonly role: string | null;
   readonly name: string;
 }
@@ -12,7 +12,7 @@ export interface SessionContext {
  */
 export function getSessionContext(session: SessionService): SessionContext {
   return {
-    id: session.getUserId(),
+    id: String(session.getUserId() ?? ''),
     role: session.getRole(),
     name: session.getName(),
   };
