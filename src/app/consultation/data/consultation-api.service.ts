@@ -23,29 +23,36 @@ import {
 export class ConsultationApiService {
   private readonly api = inject(ApiClientService);
 
-  listByPatient(patientId: number, page = 1, limit = 100): Observable<ApiPage<Appointment>> {
+  listByPatient(patientId: string, page = 1, limit = 100): Observable<ApiPage<Appointment>> {
     return this.api.getWithParams<ApiPage<Appointment>>(
       `/appointments/patient/${patientId}`,
       { page, limit },
     );
   }
 
-  listByProfessional(professionalId: number, page = 1, limit = 100): Observable<ApiPage<Appointment>> {
+  listByProfessional(professionalId: string, page = 1, limit = 100): Observable<ApiPage<Appointment>> {
     return this.api.getWithParams<ApiPage<Appointment>>(
       `/appointments/professional/${professionalId}`,
       { page, limit },
     );
   }
 
-  getPreconsultation(id: number): Observable<PreconsultationSummary> {
+  getPreconsultationSummary(appointmentId: string): Observable<PreconsultationSummary> {
+    return this.api.getWithParams<PreconsultationSummary>(
+      '/agent/preconsultations',
+      { appointmentId }
+    );
+  }
+
+  getPreconsultation(id: string): Observable<PreconsultationSummary> {
     return this.api.get<PreconsultationSummary>(`/consultations/preconsultation/${id}`);
   }
 
-  getAttention(id: number): Observable<AttentionSummary> {
+  getAttention(id: string): Observable<AttentionSummary> {
     return this.api.get<AttentionSummary>(`/consultations/attention/${id}`);
   }
 
-  getPostSummary(id: number): Observable<PostConsultationSummary> {
+  getPostSummary(id: string): Observable<PostConsultationSummary> {
     return this.api.get<PostConsultationSummary>(`/consultations/post/${id}`);
   }
 

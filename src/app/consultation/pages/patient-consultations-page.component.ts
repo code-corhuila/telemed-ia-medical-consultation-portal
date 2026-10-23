@@ -55,7 +55,7 @@ export class PatientConsultationsPageComponent implements OnInit {
     }
     this.loading.set(true);
     this.error.set(null);
-    this.api.listByPatient(this.patientId).subscribe({
+    this.api.listByPatient(this.patientId as string).subscribe({
       next: (response) => {
         this.appointments.set(response.data ?? []);
         this.loading.set(false);

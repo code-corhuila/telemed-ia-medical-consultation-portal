@@ -56,7 +56,7 @@ export class ProfessionalConsultationsPageComponent implements OnInit {
     }
     this.loading.set(true);
     this.error.set(null);
-    this.api.listByProfessional(this.professionalId).subscribe({
+    this.api.listByProfessional(this.professionalId as string).subscribe({
       next: (response) => { this.appointments.set(response.data ?? []); this.loading.set(false); },
       error: (error) => { this.error.set(getErrorMessage(error, 'No fue posible cargar las consultas asignadas.')); this.loading.set(false); },
     });
