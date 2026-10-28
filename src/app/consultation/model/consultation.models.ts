@@ -38,11 +38,19 @@ export interface PreconsultationSummary {
   createdAt: string;
 }
 
+export interface MedicationDTO {
+  name: string;
+  dosage?: string;
+  frequency?: string;
+  duration?: string;
+  instructions?: string;
+}
+
 export interface AttentionSummary {
   id: string;
   diagnosis: string;
   recommendations: string;
-  medications?: string;
+  medications?: MedicationDTO[];
   observations?: string;
   referral?: string;
 }
@@ -59,15 +67,15 @@ export interface CreateAttentionPayload {
   appointmentId: string;
   diagnosis: string;
   recommendations: string;
-  medications?: string;
+  medications?: MedicationDTO[];
   observations?: string;
   referral?: string;
 }
 
 export interface GeneratePostSummaryPayload {
-  appointmentId: number;
-  preconsultationSummaryId: number;
-  attentionSummaryId: number;
+  appointmentId: string;
+  preconsultationSummaryId: string;
+  attentionSummaryId: string;
 }
 
 export interface ApiError {

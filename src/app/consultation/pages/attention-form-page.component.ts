@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
-import { Appointment, AttentionSummary, CreateAttentionPayload, PreconsultationSummary } from '../model/consultation.models';
+import { Appointment, AttentionSummary, CreateAttentionPayload, MedicationDTO, PreconsultationSummary } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
 @Component({
@@ -48,7 +48,7 @@ export class AttentionFormPageComponent implements OnInit {
   ngOnInit(): void {
     const appointmentId = this.route.snapshot.paramMap.get('appointmentId');
     const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
+
     if (!appointmentId || !UUID_PATTERN.test(appointmentId)) {
       this.loadError.set('El identificador de la cita no es válido.');
       this.loading.set(false);
@@ -100,20 +100,22 @@ export class AttentionFormPageComponent implements OnInit {
     if (this.form.invalid || this.saving() || !this.appointment()) return;
 
     const value = this.form.getRawValue();
-    const medicationParts = [
-      value.medicationName ? `Medicamento: ${value.medicationName}` : '',
-      value.dosage ? `Dosis: ${value.dosage}` : '',
-      value.frequency ? `Frecuencia: ${value.frequency}` : '',
-      value.duration ? `Duración: ${value.duration}` : '',
-      value.medicationInstructions ? `Indicaciones: ${value.medicationInstructions}` : '',
-    ].filter(Boolean);
+    const medications: MedicationDTO[] = value.medicationName
+      ? [{
+          name: value.medicationName.trim(),
+          dosage: value.dosage?.trim() || undefined,
+          frequency: value.frequency?.trim() || undefined,
+          duration: value.duration?.trim() || undefined,
+          instructions: value.medicationInstructions?.trim() || undefined,
+        }]
+      : [];
 
     const payload: CreateAttentionPayload = {
       appointmentId: this.appointment()!.id,
       diagnosis: value.diagnosis.trim(),
       recommendations: value.recommendations.trim(),
       observations: value.observations.trim() || undefined,
-      medications: medicationParts.join('\n') || undefined,
+      medications: medications.length > 0 ? medications : undefined,
       referral: value.referral.trim() || undefined,
     };
 
