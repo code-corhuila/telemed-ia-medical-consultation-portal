@@ -135,8 +135,14 @@ export const MOCK_ATTENTIONS: Record<number, AttentionSummary> = {
     id: 'a0000000-0000-4000-8000-000000000202',
     diagnosis: 'Cefalea tensional episódica',
     recommendations: 'Hidratación, higiene del sueño, pausas activas cada 2 horas.',
-    medications:
-      'Medicamento: Ibuprofeno 400mg\nDosis: 1 tableta\nFrecuencia: Cada 8 horas\nDuración: 3 días',
+    medications: [
+      {
+        name: 'Ibuprofeno 400mg',
+        dosage: '1 tableta',
+        frequency: 'Cada 8 horas',
+        duration: '3 días',
+      },
+    ],
     observations: 'Paciente consciente, orientado, sin signos de alarma neurológica.',
   },
   204: {
@@ -144,8 +150,14 @@ export const MOCK_ATTENTIONS: Record<number, AttentionSummary> = {
     diagnosis: 'Bronquitis aguda leve',
     recommendations:
       'Reposo relativo, abundantes líquidos, evitar cambios bruscos de temperatura.',
-    medications:
-      'Medicamento: Salbutamol inhalador\nDosis: 2 puff\nFrecuencia: Cada 6 horas si hay tos\nDuración: 5 días',
+    medications: [
+      {
+        name: 'Salbutamol inhalador',
+        dosage: '2 puff',
+        frequency: 'Cada 6 horas si hay tos',
+        duration: '5 días',
+      },
+    ],
     observations: 'Auscultación con leves sibilancias dispersas.',
     referral: 'Neumología si persiste más de 2 semanas',
   },
