@@ -49,13 +49,18 @@ export class ConsultationApiService {
   }
 
   getAttention(id: string): Observable<AttentionSummary> {
-    return this.api.get<AttentionSummary>(`/consultations/attention/${id}`);
+    return this.api.get<AttentionSummary>(`/consultations/${id}/attention`);
   }
 
   getPostSummary(id: string): Observable<PostConsultationSummary> {
-    return this.api.get<PostConsultationSummary>(`/consultations/post/${id}`);
+    return this.api.get<PostConsultationSummary>(`/post-summaries/${id}`);
   }
 
+  // TODO(consultation-id): the Go backend expects POST /consultations/{consultationId}/attention,
+  // but the portal only knows the appointmentId. Until the Citas API exposes
+  // GET /appointments/{id}/consultation (or Consultas adds POST /consultations),
+  // the create-attention flow cannot run end-to-end and stays in mock mode.
+  // See 15-project-control/technical-backlog.md (QA 2026-10-27).
   createAttention(payload: CreateAttentionPayload): Observable<AttentionSummary> {
     return this.api.post<AttentionSummary>(
       '/consultations/attention',
