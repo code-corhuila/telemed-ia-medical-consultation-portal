@@ -12,7 +12,7 @@ export interface SessionContext {
  */
 export function getSessionContext(session: SessionService): SessionContext {
   return {
-    id: String(session.getUserId() ?? ''),
+    id: session.getUserId(),
     role: session.getRole(),
     name: session.getName(),
   };
