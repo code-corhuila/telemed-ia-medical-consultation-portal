@@ -50,7 +50,7 @@ export class ProfessionalConsultationsPageComponent implements OnInit {
 
   protected load(): void {
     if (this.professionalId === null) {
-      this.error.set('No se encontró un identificador numérico de profesional en la sesión.');
+      this.error.set('No se encontró un identificador de profesional en la sesión.');
       this.loading.set(false);
       return;
     }

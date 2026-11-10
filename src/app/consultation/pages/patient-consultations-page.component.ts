@@ -49,7 +49,7 @@ export class PatientConsultationsPageComponent implements OnInit {
 
   protected load(): void {
     if (this.patientId === null) {
-      this.error.set('No se encontró un identificador numérico de paciente en la sesión.');
+      this.error.set('No se encontró un identificador de paciente en la sesión.');
       this.loading.set(false);
       return;
     }

@@ -17,7 +17,7 @@ declare module 'shell/apiClient' {
 
 declare module 'shell/session' {
   export class SessionService {
-    getUserId(): number | null;
+    getUserId(): string | null;
     getRole(): string | null;
     getName(): string;
     isAuthenticated(): boolean;

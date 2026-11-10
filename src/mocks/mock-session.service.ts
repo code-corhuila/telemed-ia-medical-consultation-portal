@@ -8,7 +8,7 @@ import { Injectable } from '@angular/core';
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
-  private readonly id: number | null;
+  private readonly id: string;
   private readonly role: string;
   private readonly name: string;
 
@@ -16,14 +16,14 @@ export class SessionService {
     const params = new URLSearchParams(window.location.search);
     const rawId = params.get('mockId');
     this.role = (params.get('mockRole') ?? 'PATIENT').toUpperCase();
-    this.id = rawId !== null ? Number(rawId) : (this.role === 'PROFESSIONAL' ? 2 : 1);
+    this.id = rawId ?? (this.role === 'PROFESSIONAL' ? '2' : '1');
     this.name =
       params.get('mockName') ??
       (this.role === 'PROFESSIONAL' ? 'Dra. María Gómez' : 'Juan Pérez');
   }
 
-  getUserId(): number | null {
-    return this.id !== null && Number.isFinite(this.id) ? this.id : null;
+  getUserId(): string | null {
+    return this.id;
   }
   getRole(): string | null {
     return this.role;
