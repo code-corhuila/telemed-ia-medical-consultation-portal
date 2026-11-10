@@ -10,4 +10,4 @@ FROM nginx:1.27-alpine AS runtime
 COPY deploy/nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /app/dist/telemed-ia-medical-consultation-portal/browser /usr/share/nginx/html
 EXPOSE 80
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD wget -qO- http://localhost/remoteEntry.json >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD wget -qO- http://127.0.0.1/remoteEntry.json >/dev/null || exit 1
