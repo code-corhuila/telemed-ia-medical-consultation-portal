@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
 import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
-import { getErrorMessage } from '../data/error-message';
+import { errorCode, getErrorMessage } from '../data/error-message';
 import { Appointment, AttentionSummary, MedicationDTO, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
@@ -28,6 +28,7 @@ export class ConsultationDetailPageComponent implements OnInit {
   protected readonly postSummary = signal<PostConsultationSummary | null>(null);
   protected readonly attention = signal<AttentionSummary | null>(null);
   protected readonly preconsultation = signal<PreconsultationSummary | null>(null);
+  protected readonly preconsultationCompleted = signal(false);
   protected readonly summaryLoading = signal(false);
   protected readonly summaryNotice = signal<string | null>(null);
   protected readonly sessionRole = this.session.role;
@@ -83,16 +84,16 @@ export class ConsultationDetailPageComponent implements OnInit {
           this.postSummary.set(summary);
           this.summaryLoading.set(false);
           if (summary.attentionSummaryId) this.loadAttention(summary.consultationId);
-          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment.preconsultationSummaryId);
+          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment);
         },
         error: (error) => {
           this.summaryNotice.set(getErrorMessage(error, 'El resumen posterior todavía no está disponible.'));
           this.summaryLoading.set(false);
-          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment.preconsultationSummaryId);
+          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment);
         },
       });
     } else if (appointment.preconsultationSummaryId !== null) {
-      this.loadPreconsultation(appointment.preconsultationSummaryId);
+      this.loadPreconsultation(appointment);
       this.summaryNotice.set('La cita aún no tiene un resumen posterior asociado.');
     } else {
       this.summaryNotice.set('Esta cita no tiene una referencia de preconsulta ni un resumen posterior asociado.');
@@ -113,10 +114,22 @@ export class ConsultationDetailPageComponent implements OnInit {
       .join('\n');
   }
 
-  private loadPreconsultation(id: string): void {
-    this.api.getPreconsultation(id as string).subscribe({
+  /**
+   * The agent shows the pre-consultation summary to the appointment's professional only
+   * (GET /agent/preconsultations?appointmentId=); the patient sees that it was completed.
+   */
+  private loadPreconsultation(appointment: Appointment): void {
+    if (this.session.role !== 'PROFESSIONAL') {
+      this.preconsultationCompleted.set(true);
+      return;
+    }
+    this.api.getPreconsultationSummary(appointment.id).subscribe({
       next: (summary) => this.preconsultation.set(summary),
-      error: (error) => this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar el resumen de preconsulta.')),
+      error: (error) => {
+        if (errorCode(error) !== 'SUMMARY_NOT_FOUND') {
+          this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar el resumen de preconsulta.'));
+        }
+      },
     });
   }
 
