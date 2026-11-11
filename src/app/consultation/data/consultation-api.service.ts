@@ -53,7 +53,7 @@ export class ConsultationApiService {
   }
 
   getPostSummary(id: string): Observable<PostConsultationSummary> {
-    return this.api.get<PostConsultationSummary>(`/post-summaries/${id}`);
+    return this.api.get<PostConsultationSummary>(`/consultations/post-summaries/${id}`);
   }
 
   // TODO(consultation-id): the Go backend expects POST /consultations/{consultationId}/attention,
