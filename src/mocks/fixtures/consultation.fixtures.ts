@@ -4,6 +4,7 @@ import {
   AttentionSummary,
   PostConsultationSummary,
   PreconsultationSummary,
+  ProfessionalListItem,
 } from '../../app/consultation/model/consultation.models';
 
 // ─────────────────────────────────────────────────────────────
@@ -209,3 +210,18 @@ export function makePage<T>(items: T[], page = 1, limit = 100): ApiPage<T> {
     },
   };
 }
+
+// ─────────────────────────────────────────────────────────────
+// Names: professional-management list and identity names lookup
+// ─────────────────────────────────────────────────────────────
+export const MOCK_PROFESSIONALS: ProfessionalListItem[] = [
+  { id: 'f0000000-0000-4000-8000-2', identityUserId: 'c0000000-0000-4000-8000-2', fullName: 'Dra. Gómez', professionalType: 'GENERAL_PRACTITIONER', status: 'ACTIVE' },
+  { id: 'f0000000-0000-4000-8000-5', identityUserId: 'c0000000-0000-4000-8000-5', fullName: 'Dr. Ramírez', professionalType: 'GENERAL_PRACTITIONER', status: 'ACTIVE' },
+];
+
+export const MOCK_PATIENT_NAMES: Record<string, string> = {
+  'b0000000-0000-4000-8000-1': 'Juan Pérez',
+  'b0000000-0000-4000-8000-3': 'María García',
+  'b0000000-0000-4000-8000-4': 'Carlos Rodríguez',
+  'b0000000-0000-4000-8000-6': 'Ana Torres',
+};

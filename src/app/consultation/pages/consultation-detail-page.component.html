@@ -26,8 +26,8 @@
         <p>{{ item.start | date:'EEEE, d MMMM y · HH:mm' }} – {{ item.end | date:'HH:mm' }}</p>
       </div>
       <div class="overview-meta">
-        <span>Paciente</span><strong>#{{ item.patientId }}</strong>
-        <span>Profesional</span><strong>#{{ item.professionalId }}</strong>
+        <span>Paciente</span><strong>{{ sessionRole === 'PROFESSIONAL' ? directory.patientName(item.patientId) : sessionName }}</strong>
+        <span>Profesional</span><strong>{{ sessionRole === 'PROFESSIONAL' ? sessionName : directory.professionalName(item.professionalId) }}</strong>
       </div>
     </section>
 

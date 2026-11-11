@@ -23,7 +23,7 @@
           <div class="assigned-card__date"><strong>{{ item.start | date:'d' }}</strong><span>{{ item.start | date:'MMM' }}</span></div>
           <div class="assigned-card__content">
             <div class="assigned-card__title-row"><span class="eyebrow">CITA #{{ item.id }}</span><span class="badge" [class.badge--completed]="item.status === 'COMPLETED'" [class.badge--confirmed]="item.status === 'CONFIRMED'" [class.badge--rescheduled]="item.status === 'RESCHEDULED'" [class.badge--cancelled]="item.status === 'CANCELLED'" [class.badge--no-show]="item.status === 'NO_SHOW'">{{ statusLabel(item.status) }}</span></div>
-            <h2>Paciente #{{ item.patientId }}</h2>
+            <h2>{{ directory.patientName(item.patientId) }}</h2>
             <p class="assigned-card__time"><span aria-hidden="true">◷</span>{{ item.start | date:'dd/MM/yyyy · HH:mm' }} – {{ item.end | date:'HH:mm' }}</p>
             @if (item.preconsultationSummaryId !== null) { <p class="preconsult-state preconsult-state--available"><span aria-hidden="true">✓</span> Preconsulta disponible · ref. #{{ item.preconsultationSummaryId }}</p> } @else { <p class="preconsult-state"><span aria-hidden="true">ⓘ</span> No hay referencia de preconsulta asociada</p> }
           </div>

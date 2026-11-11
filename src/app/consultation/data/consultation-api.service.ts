@@ -2,12 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClientService } from 'shell/apiClient';
 import {
+  AccountName,
   ApiPage,
   Appointment,
   AttentionSummary,
   CreateAttentionPayload,
   PostConsultationSummary,
   PreconsultationSummary,
+  ProfessionalListItem,
 } from '../model/consultation.models';
 
 /**
@@ -35,6 +37,16 @@ export class ConsultationApiService {
       `/appointments/professional/${professionalId}`,
       { page, limit },
     );
+  }
+
+  /** Professionals with their names (professional-management, any authenticated role). */
+  listProfessionals(): Observable<ApiPage<ProfessionalListItem>> {
+    return this.api.getWithParams<ApiPage<ProfessionalListItem>>('/professionals', { page: 1, limit: 100 });
+  }
+
+  /** Names of up to 50 accounts (identity DEC-013; a professional gets patients only). */
+  lookupAccountNames(ids: readonly string[]): Observable<{ data: AccountName[] }> {
+    return this.api.getWithParams<{ data: AccountName[] }>('/auth/accounts/names', { ids: ids.join(',') });
   }
 
   getPreconsultationSummary(appointmentId: string): Observable<PreconsultationSummary> {

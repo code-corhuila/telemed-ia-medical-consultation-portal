@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
 import { Appointment, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
@@ -16,6 +17,7 @@ export class ConsultationDetailPageComponent implements OnInit {
   private readonly api = inject(ConsultationApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly sessionService = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly session = getSessionContext(this.sessionService);
 
   protected readonly loading = signal(true);
@@ -26,6 +28,7 @@ export class ConsultationDetailPageComponent implements OnInit {
   protected readonly summaryLoading = signal(false);
   protected readonly summaryNotice = signal<string | null>(null);
   protected readonly sessionRole = this.session.role;
+  protected readonly sessionName = this.session.name;
 
   ngOnInit(): void {
     const appointmentId = Number(this.route.snapshot.paramMap.get('appointmentId'));
@@ -54,6 +57,11 @@ export class ConsultationDetailPageComponent implements OnInit {
           return;
         }
         this.appointment.set(item);
+        if (isProfessional) {
+          this.directory.resolvePatients([item.patientId]);
+        } else {
+          this.directory.resolveProfessionals();
+        }
         this.loading.set(false);
         this.loadSummaries(item);
       },

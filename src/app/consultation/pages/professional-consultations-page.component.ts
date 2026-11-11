@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
 import { Appointment } from '../model/consultation.models';
@@ -17,6 +18,7 @@ type QueueFilter = 'ALL' | 'TO_ATTEND' | 'COMPLETED';
 export class ProfessionalConsultationsPageComponent implements OnInit {
   private readonly api = inject(ConsultationApiService);
   private readonly session = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly professionalId = getSessionContext(this.session).id;
   protected readonly professionalName = this.session.getName() || 'Profesional';
   protected readonly loading = signal(true);
@@ -57,7 +59,11 @@ export class ProfessionalConsultationsPageComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.api.listByProfessional(this.professionalId as string).subscribe({
-      next: (response) => { this.appointments.set(response.data ?? []); this.loading.set(false); },
+      next: (response) => {
+        this.appointments.set(response.data ?? []);
+        this.directory.resolvePatients(this.appointments().map((item) => item.patientId));
+        this.loading.set(false);
+      },
       error: (error) => { this.error.set(getErrorMessage(error, 'No fue posible cargar las consultas asignadas.')); this.loading.set(false); },
     });
   }
