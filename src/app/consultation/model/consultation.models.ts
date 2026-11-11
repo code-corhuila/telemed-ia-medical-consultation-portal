@@ -48,6 +48,7 @@ export interface MedicationDTO {
 
 export interface AttentionSummary {
   id: string;
+  consultationId: string;
   diagnosis: string;
   recommendations: string;
   medications?: MedicationDTO[];
@@ -55,10 +56,16 @@ export interface AttentionSummary {
   referral?: string;
 }
 
+/** GET /consultations/post-summaries/{id}: references only; the attention is read by consultation. */
 export interface PostConsultationSummary {
   id: string;
-  preconsultationSummary?: PreconsultationSummary;
-  attentionSummary?: AttentionSummary;
+  consultationId: string;
+  appointmentId: string;
+  patientId: string;
+  preconsultationSummaryId?: string;
+  attentionSummaryId?: string;
+  professionalId?: string;
+  completedAt?: string;
   generatedAt: string;
 }
 

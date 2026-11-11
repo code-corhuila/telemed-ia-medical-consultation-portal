@@ -53,11 +53,11 @@
 
       <article class="detail-panel">
         <header class="detail-panel__header"><span class="panel-icon panel-icon--green">02</span><div><p class="eyebrow">INFORMACIÓN PROFESIONAL</p><h2>Atención médica</h2></div></header>
-        @if (postSummary()?.attentionSummary; as attention) {
+        @if (attention(); as attention) {
           <dl class="summary-list">
             <div><dt>Diagnóstico</dt><dd>{{ attention.diagnosis || 'No registrado' }}</dd></div>
             <div><dt>Recomendaciones</dt><dd>{{ attention.recommendations || 'No registradas' }}</dd></div>
-            <div><dt>Medicamentos</dt><dd class="preserve-lines">{{ attention.medications || 'No registrados' }}</dd></div>
+            <div><dt>Medicamentos</dt><dd class="preserve-lines">{{ medicationLines(attention.medications) || 'No registrados' }}</dd></div>
             <div><dt>Observaciones</dt><dd class="preserve-lines">{{ attention.observations || 'Sin observaciones' }}</dd></div>
             <div><dt>Remisión</dt><dd>{{ attention.referral || 'No se registró remisión' }}</dd></div>
           </dl>

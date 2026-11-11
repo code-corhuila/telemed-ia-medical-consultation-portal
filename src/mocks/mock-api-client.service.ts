@@ -102,22 +102,20 @@ export class ApiClientService {
       return found as unknown as T;
     }
 
-    // ── GET /consultations/attention/:id ──
-    const attention = path.match(/^\/consultations\/attention\/(\d+)/);
-    if (attention) {
-      const id = Number(attention[1]);
-      const found = MOCK_ATTENTIONS[id];
-      if (!found) throw this.notFound(`Attention ${id} not found in fixtures`);
-      return found as unknown as T;
+    // ── GET /consultations/:consultationId/attention ──
+    const attention = path.match(/^\/consultations\/([0-9a-f-]{36})\/attention$/);
+    if (attention && !body) {
+      const found = Object.values(MOCK_ATTENTIONS).find((a) => a.consultationId === attention[1]);
+      if (!found) throw this.notFound(`Attention of consultation ${attention[1]} not found in fixtures`);
+      return { data: found } as unknown as T;
     }
 
-    // ── GET /consultations/post/:id ──
-    const post = path.match(/^\/consultations\/post\/(\d+)/);
+    // ── GET /consultations/post-summaries/:id ──
+    const post = path.match(/^\/consultations\/post-summaries\/([0-9a-f-]+)$/);
     if (post) {
-      const id = Number(post[1]);
-      const found = MOCK_POST_SUMMARIES[id];
-      if (!found) throw this.notFound(`Post summary ${id} not found in fixtures`);
-      return found as unknown as T;
+      const found = Object.values(MOCK_POST_SUMMARIES).find((s) => s.id === post[1]);
+      if (!found) throw this.notFound(`Post summary ${post[1]} not found in fixtures`);
+      return { data: found } as unknown as T;
     }
 
     // ── POST /consultations (DEC-006) ──
@@ -161,13 +159,14 @@ export class ApiClientService {
     if (!consultation) throw this.notFound(`Consultation ${consultationId} not found`);
     const now = new Date().toISOString();
     this.consultations.set(consultationId, { ...consultation, status: 'COMPLETED', completedAt: now, updatedAt: now });
-    return this.createAttention(payload);
+    return this.createAttention(consultationId, payload);
   }
 
-  private createAttention(payload: RecordAttentionPayload): AttentionSummary {
+  private createAttention(consultationId: string, payload: RecordAttentionPayload): AttentionSummary {
     const nextId = 'f0000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0'); // Generación rápida de UUID falso 'f0000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0'); // Generación rápida de UUID falso Math.max(0, ...Object.keys(MOCK_ATTENTIONS).map(Number)) + 1;
     const created: AttentionSummary = {
       id: nextId,
+      consultationId,
       diagnosis: payload.diagnosis,
       recommendations: payload.recommendations,
       medications: payload.medications,
