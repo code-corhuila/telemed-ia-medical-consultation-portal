@@ -11,7 +11,7 @@ import { SessionService } from 'shell/session';
 @Component({
   selector: 'app-attention-form-page', standalone: true,
   imports: [DatePipe, ReactiveFormsModule, RouterLink],
-  templateUrl: './attention-form-page.component.html', styleUrl: './attention-form-page.component.css',
+  templateUrl: './attention-form-page.component.html', styleUrls: ['../consultation-theme.css', './attention-form-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AttentionFormPageComponent implements OnInit {

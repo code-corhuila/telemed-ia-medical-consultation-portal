@@ -14,7 +14,7 @@ type HistoryFilter = 'ALL' | 'AVAILABLE' | 'PENDING';
   standalone: true,
   imports: [DatePipe, RouterLink],
   templateUrl: './patient-consultations-page.component.html',
-  styleUrl: './patient-consultations-page.component.css',
+  styleUrls: ['../consultation-theme.css', './patient-consultations-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PatientConsultationsPageComponent implements OnInit {

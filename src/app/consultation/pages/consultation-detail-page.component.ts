@@ -9,7 +9,7 @@ import { SessionService } from 'shell/session';
 
 @Component({
   selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink],
-  templateUrl: './consultation-detail-page.component.html', styleUrl: './consultation-detail-page.component.css',
+  templateUrl: './consultation-detail-page.component.html', styleUrls: ['../consultation-theme.css', './consultation-detail-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConsultationDetailPageComponent implements OnInit {
