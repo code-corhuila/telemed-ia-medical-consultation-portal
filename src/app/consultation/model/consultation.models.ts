@@ -62,12 +62,28 @@ export interface PostConsultationSummary {
   generatedAt: string;
 }
 
-/** This shape follows consultation-service.yaml as published in governance. */
-export interface CreateAttentionPayload {
+/** Consultation of one appointment (consultation DEC-006). */
+export interface Consultation {
+  id: string;
   appointmentId: string;
+  patientId: string;
+  professionalId: string;
+  status: 'IN_PROGRESS' | 'COMPLETED';
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** The consultation API wraps every success answer in `data`. */
+export interface DataEnvelope<T> {
+  data: T;
+}
+
+/** Body of POST /consultations/{id}/attention. `medications` is always an array. */
+export interface RecordAttentionPayload {
   diagnosis: string;
   recommendations: string;
-  medications?: MedicationDTO[];
+  medications: MedicationDTO[];
   observations?: string;
   referral?: string;
 }
