@@ -134,6 +134,7 @@ export const MOCK_PRECONSULTATIONS: Record<string, PreconsultationSummary> = {
 export const MOCK_ATTENTIONS: Record<number, AttentionSummary> = {
   202: {
     id: 'a0000000-0000-4000-8000-000000000202',
+    consultationId: 'f0000000-0000-4000-8000-000000000202',
     diagnosis: 'Cefalea tensional episódica',
     recommendations: 'Hidratación, higiene del sueño, pausas activas cada 2 horas.',
     medications: [
@@ -148,6 +149,7 @@ export const MOCK_ATTENTIONS: Record<number, AttentionSummary> = {
   },
   204: {
     id: 'a0000000-0000-4000-8000-000000000204',
+    consultationId: 'f0000000-0000-4000-8000-000000000204',
     diagnosis: 'Bronquitis aguda leve',
     recommendations:
       'Reposo relativo, abundantes líquidos, evitar cambios bruscos de temperatura.',
@@ -164,6 +166,7 @@ export const MOCK_ATTENTIONS: Record<number, AttentionSummary> = {
   },
   206: {
     id: 'a0000000-0000-4000-8000-000000000206',
+    consultationId: 'f0000000-0000-4000-8000-000000000206',
     diagnosis: 'Nevus melanocítico benigno',
     recommendations: 'Fotoprotección diaria, control dermatológico anual.',
     observations: 'Lesión simétrica, bordes regulares, color homogéneo.',
@@ -175,21 +178,27 @@ export const MOCK_ATTENTIONS: Record<number, AttentionSummary> = {
 // ─────────────────────────────────────────────────────────────
 export const MOCK_POST_SUMMARIES: Record<number, PostConsultationSummary> = {
   102: {
-    id: 'a0000000-0000-4000-8000-000000000102',
-    preconsultationSummary: MOCK_PRECONSULTATIONS[12],
-    attentionSummary: MOCK_ATTENTIONS[202],
+    id: 'e0000000-0000-4000-8000-102',
+    consultationId: MOCK_ATTENTIONS[202].consultationId,
+    appointmentId: 'a0000000-0000-4000-8000-000000000002',
+    patientId: 'b0000000-0000-4000-8000-1',
+    attentionSummaryId: MOCK_ATTENTIONS[202].id,
     generatedAt: '2026-09-20T11:00:00',
   },
   104: {
-    id: 'a0000000-0000-4000-8000-000000000104',
-    preconsultationSummary: MOCK_PRECONSULTATIONS[14],
-    attentionSummary: MOCK_ATTENTIONS[204],
+    id: 'e0000000-0000-4000-8000-104',
+    consultationId: MOCK_ATTENTIONS[204].consultationId,
+    appointmentId: 'a0000000-0000-4000-8000-000000000004',
+    patientId: 'b0000000-0000-4000-8000-1',
+    attentionSummaryId: MOCK_ATTENTIONS[204].id,
     generatedAt: '2026-07-10T09:30:00',
   },
   106: {
-    id: 'a0000000-0000-4000-8000-000000000106',
-    preconsultationSummary: MOCK_PRECONSULTATIONS[16],
-    attentionSummary: MOCK_ATTENTIONS[206],
+    id: 'e0000000-0000-4000-8000-106',
+    consultationId: MOCK_ATTENTIONS[206].consultationId,
+    appointmentId: 'a0000000-0000-4000-8000-000000000006',
+    patientId: 'b0000000-0000-4000-8000-4',
+    attentionSummaryId: MOCK_ATTENTIONS[206].id,
     generatedAt: '2026-10-05T15:30:00',
   },
 };
