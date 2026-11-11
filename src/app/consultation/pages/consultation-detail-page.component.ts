@@ -5,7 +5,7 @@ import { ConsultationApiService } from '../data/consultation-api.service';
 import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
-import { Appointment, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
+import { Appointment, AttentionSummary, MedicationDTO, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -26,6 +26,7 @@ export class ConsultationDetailPageComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly appointment = signal<Appointment | null>(null);
   protected readonly postSummary = signal<PostConsultationSummary | null>(null);
+  protected readonly attention = signal<AttentionSummary | null>(null);
   protected readonly preconsultation = signal<PreconsultationSummary | null>(null);
   protected readonly summaryLoading = signal(false);
   protected readonly summaryNotice = signal<string | null>(null);
@@ -80,11 +81,9 @@ export class ConsultationDetailPageComponent implements OnInit {
       this.api.getPostSummary(appointment.postSummaryId as string).subscribe({
         next: (summary) => {
           this.postSummary.set(summary);
-          this.preconsultation.set(summary.preconsultationSummary ?? null);
           this.summaryLoading.set(false);
-          if (!summary.preconsultationSummary && appointment.preconsultationSummaryId) {
-            this.loadPreconsultation(appointment.preconsultationSummaryId);
-          }
+          if (summary.attentionSummaryId) this.loadAttention(summary.consultationId);
+          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment.preconsultationSummaryId);
         },
         error: (error) => {
           this.summaryNotice.set(getErrorMessage(error, 'El resumen posterior todavía no está disponible.'));
@@ -98,6 +97,20 @@ export class ConsultationDetailPageComponent implements OnInit {
     } else {
       this.summaryNotice.set('Esta cita no tiene una referencia de preconsulta ni un resumen posterior asociado.');
     }
+  }
+
+  private loadAttention(consultationId: string): void {
+    this.api.getAttention(consultationId).subscribe({
+      next: (attention) => this.attention.set(attention),
+      error: (error) => this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar la atención profesional.')),
+    });
+  }
+
+  /** One line per medication: name, then dose, frequency, duration and instructions when recorded. */
+  protected medicationLines(medications: MedicationDTO[] | undefined): string {
+    return (medications ?? [])
+      .map((m) => [m.name, m.dosage, m.frequency, m.duration, m.instructions].filter((part) => !!part).join(' · '))
+      .join('\n');
   }
 
   private loadPreconsultation(id: string): void {
