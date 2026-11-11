@@ -23,7 +23,7 @@
       <div class="overview-main">
         <span class="eyebrow">CITA #{{ item.id }}</span>
         <h2>Consulta médica</h2>
-        <p>{{ item.start | date:'EEEE, d MMMM y · HH:mm' }} – {{ item.end | date:'HH:mm' }}</p>
+        <p>{{ item.start | spanishDate:'long' }} · {{ item.start | date:'HH:mm' }} – {{ item.end | date:'HH:mm' }}</p>
       </div>
       <div class="overview-meta">
         <span>Paciente</span><strong>{{ sessionRole === 'PROFESSIONAL' ? directory.patientName(item.patientId) : sessionName }}</strong>

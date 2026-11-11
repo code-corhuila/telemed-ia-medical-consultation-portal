@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { SpanishDatePipe } from '../pipes/spanish-date.pipe';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
 import { PeopleDirectoryService } from '../data/people-directory.service';
@@ -11,7 +12,7 @@ import { SessionService } from 'shell/session';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Component({
-  selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink],
+  selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink, SpanishDatePipe],
   templateUrl: './consultation-detail-page.component.html', styleUrls: ['../consultation-theme.css', './consultation-detail-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
