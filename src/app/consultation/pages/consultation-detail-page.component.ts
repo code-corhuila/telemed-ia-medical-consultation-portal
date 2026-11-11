@@ -1,17 +1,18 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { SpanishDatePipe } from '../pipes/spanish-date.pipe';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
 import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
-import { getErrorMessage } from '../data/error-message';
-import { Appointment, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
+import { errorCode, getErrorMessage } from '../data/error-message';
+import { Appointment, AttentionSummary, MedicationDTO, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Component({
-  selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink],
+  selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink, SpanishDatePipe],
   templateUrl: './consultation-detail-page.component.html', styleUrls: ['../consultation-theme.css', './consultation-detail-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -26,7 +27,9 @@ export class ConsultationDetailPageComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly appointment = signal<Appointment | null>(null);
   protected readonly postSummary = signal<PostConsultationSummary | null>(null);
+  protected readonly attention = signal<AttentionSummary | null>(null);
   protected readonly preconsultation = signal<PreconsultationSummary | null>(null);
+  protected readonly preconsultationCompleted = signal(false);
   protected readonly summaryLoading = signal(false);
   protected readonly summaryNotice = signal<string | null>(null);
   protected readonly sessionRole = this.session.role;
@@ -80,30 +83,54 @@ export class ConsultationDetailPageComponent implements OnInit {
       this.api.getPostSummary(appointment.postSummaryId as string).subscribe({
         next: (summary) => {
           this.postSummary.set(summary);
-          this.preconsultation.set(summary.preconsultationSummary ?? null);
           this.summaryLoading.set(false);
-          if (!summary.preconsultationSummary && appointment.preconsultationSummaryId) {
-            this.loadPreconsultation(appointment.preconsultationSummaryId);
-          }
+          if (summary.attentionSummaryId) this.loadAttention(summary.consultationId);
+          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment);
         },
         error: (error) => {
           this.summaryNotice.set(getErrorMessage(error, 'El resumen posterior todavía no está disponible.'));
           this.summaryLoading.set(false);
-          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment.preconsultationSummaryId);
+          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment);
         },
       });
     } else if (appointment.preconsultationSummaryId !== null) {
-      this.loadPreconsultation(appointment.preconsultationSummaryId);
+      this.loadPreconsultation(appointment);
       this.summaryNotice.set('La cita aún no tiene un resumen posterior asociado.');
     } else {
       this.summaryNotice.set('Esta cita no tiene una referencia de preconsulta ni un resumen posterior asociado.');
     }
   }
 
-  private loadPreconsultation(id: string): void {
-    this.api.getPreconsultation(id as string).subscribe({
+  private loadAttention(consultationId: string): void {
+    this.api.getAttention(consultationId).subscribe({
+      next: (attention) => this.attention.set(attention),
+      error: (error) => this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar la atención profesional.')),
+    });
+  }
+
+  /** One line per medication: name, then dose, frequency, duration and instructions when recorded. */
+  protected medicationLines(medications: MedicationDTO[] | undefined): string {
+    return (medications ?? [])
+      .map((m) => [m.name, m.dosage, m.frequency, m.duration, m.instructions].filter((part) => !!part).join(' · '))
+      .join('\n');
+  }
+
+  /**
+   * The agent shows the pre-consultation summary to the appointment's professional only
+   * (GET /agent/preconsultations?appointmentId=); the patient sees that it was completed.
+   */
+  private loadPreconsultation(appointment: Appointment): void {
+    if (this.session.role !== 'PROFESSIONAL') {
+      this.preconsultationCompleted.set(true);
+      return;
+    }
+    this.api.getPreconsultationSummary(appointment.id).subscribe({
       next: (summary) => this.preconsultation.set(summary),
-      error: (error) => this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar el resumen de preconsulta.')),
+      error: (error) => {
+        if (errorCode(error) !== 'SUMMARY_NOT_FOUND') {
+          this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar el resumen de preconsulta.'));
+        }
+      },
     });
   }
 

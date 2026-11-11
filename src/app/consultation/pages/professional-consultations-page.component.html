@@ -20,7 +20,7 @@
     <div class="assigned-list">
       @for (item of filteredAppointments(); track item.id) {
         <article class="assigned-card">
-          <div class="assigned-card__date"><strong>{{ item.start | date:'d' }}</strong><span>{{ item.start | date:'MMM' }}</span></div>
+          <div class="assigned-card__date"><strong>{{ item.start | date:'d' }}</strong><span>{{ item.start | spanishDate:'month' }}</span></div>
           <div class="assigned-card__content">
             <div class="assigned-card__title-row"><span class="eyebrow">CITA #{{ item.id }}</span><span class="badge" [class.badge--completed]="item.status === 'COMPLETED'" [class.badge--confirmed]="item.status === 'CONFIRMED'" [class.badge--rescheduled]="item.status === 'RESCHEDULED'" [class.badge--cancelled]="item.status === 'CANCELLED'" [class.badge--no-show]="item.status === 'NO_SHOW'">{{ statusLabel(item.status) }}</span></div>
             <h2>{{ directory.patientName(item.patientId) }}</h2>

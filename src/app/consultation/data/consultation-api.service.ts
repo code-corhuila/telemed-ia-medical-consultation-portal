@@ -55,16 +55,17 @@ export class ConsultationApiService {
     );
   }
 
-  getPreconsultation(id: string): Observable<PreconsultationSummary> {
-    return this.api.get<PreconsultationSummary>(`/consultations/preconsultation/${id}`);
-  }
-
-  getAttention(id: string): Observable<AttentionSummary> {
-    return this.api.get<AttentionSummary>(`/consultations/${id}/attention`);
+  /** The attention of a consultation; the API allows only its patient, its professional and document-generation. */
+  getAttention(consultationId: string): Observable<AttentionSummary> {
+    return this.api
+      .get<DataEnvelope<AttentionSummary>>(`/consultations/${consultationId}/attention`)
+      .pipe(map((answer) => answer.data));
   }
 
   getPostSummary(id: string): Observable<PostConsultationSummary> {
-    return this.api.get<PostConsultationSummary>(`/consultations/post-summaries/${id}`);
+    return this.api
+      .get<DataEnvelope<PostConsultationSummary>>(`/consultations/post-summaries/${id}`)
+      .pipe(map((answer) => answer.data));
   }
 
   /**
