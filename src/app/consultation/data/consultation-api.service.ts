@@ -1,13 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiClientService } from 'shell/apiClient';
 import {
+  AccountName,
   ApiPage,
   Appointment,
   AttentionSummary,
-  CreateAttentionPayload,
+  Consultation,
+  DataEnvelope,
   PostConsultationSummary,
   PreconsultationSummary,
+  ProfessionalListItem,
+  RecordAttentionPayload,
 } from '../model/consultation.models';
 
 /**
@@ -15,9 +19,6 @@ import {
  * and the /api/v1 gateway prefix stay centralized in the shell.
  *
  * Consultation paths follow the published consultation-service.yaml contract.
- * The gateway mapping and Go HTTP handlers are documented in
- * BACKEND_INTEGRATION_GAPS.md and must be implemented before these requests
- * work end-to-end.
  */
 @Injectable({ providedIn: 'root' })
 export class ConsultationApiService {
@@ -37,6 +38,16 @@ export class ConsultationApiService {
     );
   }
 
+  /** Professionals with their names (professional-management, any authenticated role). */
+  listProfessionals(): Observable<ApiPage<ProfessionalListItem>> {
+    return this.api.getWithParams<ApiPage<ProfessionalListItem>>('/professionals', { page: 1, limit: 100 });
+  }
+
+  /** Names of up to 50 accounts (identity DEC-013; a professional gets patients only). */
+  lookupAccountNames(ids: readonly string[]): Observable<{ data: AccountName[] }> {
+    return this.api.getWithParams<{ data: AccountName[] }>('/auth/accounts/names', { ids: ids.join(',') });
+  }
+
   getPreconsultationSummary(appointmentId: string): Observable<PreconsultationSummary> {
     return this.api.getWithParams<PreconsultationSummary>(
       '/agent/preconsultations',
@@ -53,19 +64,23 @@ export class ConsultationApiService {
   }
 
   getPostSummary(id: string): Observable<PostConsultationSummary> {
-    return this.api.get<PostConsultationSummary>(`/post-summaries/${id}`);
+    return this.api.get<PostConsultationSummary>(`/consultations/post-summaries/${id}`);
   }
 
-  // TODO(consultation-id): the Go backend expects POST /consultations/{consultationId}/attention,
-  // but the portal only knows the appointmentId. Until the Citas API exposes
-  // GET /appointments/{id}/consultation (or Consultas adds POST /consultations),
-  // the create-attention flow cannot run end-to-end and stays in mock mode.
-  // See 15-project-control/technical-backlog.md (QA 2026-10-27).
-  createAttention(payload: CreateAttentionPayload): Observable<AttentionSummary> {
-    return this.api.post<AttentionSummary>(
-      '/consultations/attention',
-      payload,
-      crypto.randomUUID(),
-    );
+  /**
+   * Creates the consultation of an appointment, or returns the existing one (DEC-006).
+   * Calling it again for the same appointment is safe.
+   */
+  startConsultation(appointmentId: string): Observable<Consultation> {
+    return this.api
+      .post<DataEnvelope<Consultation>>('/consultations', { appointmentId }, crypto.randomUUID())
+      .pipe(map((answer) => answer.data));
+  }
+
+  /** Records the attention; the consultation becomes COMPLETED. */
+  recordAttention(consultationId: string, payload: RecordAttentionPayload): Observable<AttentionSummary> {
+    return this.api
+      .post<DataEnvelope<AttentionSummary>>(`/consultations/${consultationId}/attention`, payload, crypto.randomUUID())
+      .pipe(map((answer) => answer.data));
   }
 }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
 import { Appointment } from '../model/consultation.models';
@@ -14,12 +15,13 @@ type HistoryFilter = 'ALL' | 'AVAILABLE' | 'PENDING';
   standalone: true,
   imports: [DatePipe, RouterLink],
   templateUrl: './patient-consultations-page.component.html',
-  styleUrl: './patient-consultations-page.component.css',
+  styleUrls: ['../consultation-theme.css', './patient-consultations-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PatientConsultationsPageComponent implements OnInit {
   private readonly api = inject(ConsultationApiService);
   private readonly session = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly patientId = getSessionContext(this.session).id;
 
   protected readonly loading = signal(true);
@@ -49,7 +51,7 @@ export class PatientConsultationsPageComponent implements OnInit {
 
   protected load(): void {
     if (this.patientId === null) {
-      this.error.set('No se encontró un identificador numérico de paciente en la sesión.');
+      this.error.set('No se encontró un identificador de paciente en la sesión.');
       this.loading.set(false);
       return;
     }
@@ -58,6 +60,7 @@ export class PatientConsultationsPageComponent implements OnInit {
     this.api.listByPatient(this.patientId as string).subscribe({
       next: (response) => {
         this.appointments.set(response.data ?? []);
+        this.directory.resolveProfessionals();
         this.loading.set(false);
       },
       error: (error) => {

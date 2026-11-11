@@ -2,20 +2,24 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
 import { Appointment, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 @Component({
   selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink],
-  templateUrl: './consultation-detail-page.component.html', styleUrl: './consultation-detail-page.component.css',
+  templateUrl: './consultation-detail-page.component.html', styleUrls: ['../consultation-theme.css', './consultation-detail-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConsultationDetailPageComponent implements OnInit {
   private readonly api = inject(ConsultationApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly sessionService = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly session = getSessionContext(this.sessionService);
 
   protected readonly loading = signal(true);
@@ -26,10 +30,11 @@ export class ConsultationDetailPageComponent implements OnInit {
   protected readonly summaryLoading = signal(false);
   protected readonly summaryNotice = signal<string | null>(null);
   protected readonly sessionRole = this.session.role;
+  protected readonly sessionName = this.session.name;
 
   ngOnInit(): void {
-    const appointmentId = Number(this.route.snapshot.paramMap.get('appointmentId'));
-    if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+    const appointmentId = this.route.snapshot.paramMap.get('appointmentId') ?? '';
+    if (!UUID_PATTERN.test(appointmentId)) {
       this.error.set('El identificador de la cita no es válido.');
       this.loading.set(false);
       return;
@@ -47,13 +52,18 @@ export class ConsultationDetailPageComponent implements OnInit {
 
     request.subscribe({
       next: (page) => {
-        const item = page.data.find((candidate) => candidate.id === String(appointmentId));
+        const item = page.data.find((candidate) => candidate.id === appointmentId);
         if (!item) {
           this.error.set('No se encontró la cita en tu historial autorizado.');
           this.loading.set(false);
           return;
         }
         this.appointment.set(item);
+        if (isProfessional) {
+          this.directory.resolvePatients([item.patientId]);
+        } else {
+          this.directory.resolveProfessionals();
+        }
         this.loading.set(false);
         this.loadSummaries(item);
       },
