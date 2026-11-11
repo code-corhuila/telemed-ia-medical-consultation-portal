@@ -12,7 +12,6 @@ import {
   MOCK_PATIENT_NAMES,
   MOCK_PROFESSIONALS,
   MOCK_POST_SUMMARIES,
-  MOCK_PRECONSULTATIONS,
   makePage,
 } from './fixtures/consultation.fixtures';
 
@@ -91,15 +90,6 @@ export class ApiClientService {
         this.asNumber(params?.['page'], 1),
         this.asNumber(params?.['limit'], 100),
       ) as unknown as T;
-    }
-
-    // ── GET /consultations/preconsultation/:id ──
-    const preconsult = path.match(/^\/consultations\/preconsultation\/(\d+)/);
-    if (preconsult) {
-      const id = Number(preconsult[1]);
-      const found = MOCK_PRECONSULTATIONS[id];
-      if (!found) throw this.notFound(`Preconsultation ${id} not found in fixtures`);
-      return found as unknown as T;
     }
 
     // ── GET /consultations/:consultationId/attention ──
