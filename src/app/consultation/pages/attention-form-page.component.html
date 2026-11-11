@@ -5,7 +5,7 @@
   @if (loading()) { <div class="state-card"><span class="spinner"></span><span>Validando cita asignada…</span></div> }
   @else if (loadError(); as message) { <div class="state-card state-card--error" role="alert"><div><strong>No se puede abrir el formulario.</strong><p>{{ message }}</p></div><a class="btn btn--secondary" routerLink="/consultation/professional">Volver a la agenda</a></div> }
   @else if (appointment(); as item) {
-    <section class="appointment-strip"><div class="appointment-strip__icon" aria-hidden="true">✚</div><div><span class="eyebrow">CITA #{{ item.id }}</span><strong>Paciente #{{ item.patientId }}</strong><p>{{ item.start | date:'dd/MM/yyyy · HH:mm' }} – {{ item.end | date:'HH:mm' }}</p></div><span class="badge" [class.badge--confirmed]="item.status === 'CONFIRMED'" [class.badge--rescheduled]="item.status === 'RESCHEDULED'">{{ item.status === 'RESCHEDULED' ? 'REPROGRAMADA' : 'CONFIRMADA' }}</span></section>
+    <section class="appointment-strip"><div class="appointment-strip__icon" aria-hidden="true">✚</div><div><span class="eyebrow">CITA #{{ item.id }}</span><strong>{{ directory.patientName(item.patientId) }}</strong><p>{{ item.start | date:'dd/MM/yyyy · HH:mm' }} – {{ item.end | date:'HH:mm' }}</p></div><span class="badge" [class.badge--confirmed]="item.status === 'CONFIRMED'" [class.badge--rescheduled]="item.status === 'RESCHEDULED'">{{ item.status === 'RESCHEDULED' ? 'REPROGRAMADA' : 'CONFIRMADA' }}</span></section>
 
     <!-- Tarjeta de Preconsulta (Agente IA) -->
     <div class="preconsultation-card" style="margin: 1.5rem 0; padding: 1.25rem; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 6px;">

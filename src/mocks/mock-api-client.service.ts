@@ -8,6 +8,8 @@ import {
 import {
   MOCK_APPOINTMENTS,
   MOCK_ATTENTIONS,
+  MOCK_PATIENT_NAMES,
+  MOCK_PROFESSIONALS,
   MOCK_POST_SUMMARIES,
   MOCK_PRECONSULTATIONS,
   makePage,
@@ -51,6 +53,21 @@ export class ApiClientService {
     params: Record<string, unknown> | null,
     body: unknown,
   ): T {
+    // ── GET /professionals ──
+    if (path === '/professionals') {
+      return { data: MOCK_PROFESSIONALS } as unknown as T;
+    }
+
+    // ── GET /auth/accounts/names?ids=… ──
+    if (path === '/auth/accounts/names') {
+      const ids = String(params?.['ids'] ?? '').split(',');
+      return {
+        data: ids
+          .filter((id) => id in MOCK_PATIENT_NAMES)
+          .map((id) => ({ id, fullName: MOCK_PATIENT_NAMES[id] })),
+      } as unknown as T;
+    }
+
     // ── GET /appointments/patient/:id ──
     const byPatient = path.match(/^\/appointments\/patient\/(\d+)/);
     if (byPatient) {
