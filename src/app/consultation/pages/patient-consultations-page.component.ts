@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
 import { Appointment } from '../model/consultation.models';
@@ -20,6 +21,7 @@ type HistoryFilter = 'ALL' | 'AVAILABLE' | 'PENDING';
 export class PatientConsultationsPageComponent implements OnInit {
   private readonly api = inject(ConsultationApiService);
   private readonly session = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly patientId = getSessionContext(this.session).id;
 
   protected readonly loading = signal(true);
@@ -58,6 +60,7 @@ export class PatientConsultationsPageComponent implements OnInit {
     this.api.listByPatient(this.patientId as string).subscribe({
       next: (response) => {
         this.appointments.set(response.data ?? []);
+        this.directory.resolveProfessionals();
         this.loading.set(false);
       },
       error: (error) => {
