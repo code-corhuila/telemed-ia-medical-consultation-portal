@@ -37,7 +37,7 @@
     </div>
 
     @if (savedAttention(); as saved) {
-      <section class="success-card" role="status"><div class="success-card__icon" aria-hidden="true">✓</div><div><h2>Atención guardada</h2><p>Se registró el resumen de atención #{{ saved.id }} para la cita #{{ item.id }}.</p><p class="success-card__note">La consulta quedó cerrada. Marca la cita como ATENDIDA en «Citas profesionales».</p><button class="btn btn--primary" type="button" (click)="backToAgenda()">Volver a consultas asignadas</button></div></section>
+      <section class="success-card" role="status"><div class="success-card__icon" aria-hidden="true">✓</div><div><h2>Atención guardada</h2><p>Se registró el resumen de atención #{{ saved.id }} para la cita #{{ item.id }}.</p><p class="success-card__note">La consulta quedó cerrada y la cita se marca como atendida automáticamente.</p><button class="btn btn--primary" type="button" (click)="backToAgenda()">Volver a consultas asignadas</button></div></section>
     } @else {
       @if (consultationError(); as message) { <div class="form-error" role="alert"><strong>No se puede registrar la atención.</strong><p>{{ message }}</p>@if (consultation() === null) { <button class="btn btn--secondary" type="button" (click)="startConsultation(item.id)">Reintentar</button> }</div> } @else if (consultation() === null) { <div class="form-notice" role="status"><span class="spinner"></span> Iniciando la consulta…</div> }
       @if (saveError(); as message) { <div class="form-error" role="alert"><strong>No fue posible guardar la atención.</strong><p>{{ message }}</p></div> }
