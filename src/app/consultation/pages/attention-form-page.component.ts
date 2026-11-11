@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
 import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
-import { getErrorMessage } from '../data/error-message';
+import { errorCode, getErrorMessage } from '../data/error-message';
 import { Appointment, AttentionSummary, Consultation, MedicationDTO, PreconsultationSummary, RecordAttentionPayload } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
@@ -28,6 +28,8 @@ export class AttentionFormPageComponent implements OnInit {
   protected readonly preconsultationLoading = signal(true);
   protected readonly preconsultationData = signal<PreconsultationSummary | null>(null);
   protected readonly preconsultationError = signal<string | null>(null);
+  /** The patient has not done the pre-consultation: an empty state, not an error. */
+  protected readonly preconsultationMissing = signal(false);
   protected readonly loadError = signal<string | null>(null);
   protected readonly appointment = signal<Appointment | null>(null);
   protected readonly consultation = signal<Consultation | null>(null);
@@ -86,10 +88,10 @@ export class AttentionFormPageComponent implements OnInit {
         this.preconsultationData.set(summary);
         this.preconsultationLoading.set(false);
       },
-      error: (err: any) => {
-        const code = err?.error?.error;
+      error: (err: unknown) => {
+        const code = errorCode(err);
         if (code === 'SUMMARY_NOT_FOUND') {
-          this.preconsultationError.set('El paciente aún no ha completado la preconsulta.');
+          this.preconsultationMissing.set(true);
         } else if (code === 'SERVICE_UNAVAILABLE') {
           this.preconsultationError.set('El servicio de preconsulta no está disponible en este momento.');
         } else {
