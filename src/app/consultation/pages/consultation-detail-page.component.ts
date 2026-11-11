@@ -7,6 +7,8 @@ import { getErrorMessage } from '../data/error-message';
 import { Appointment, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 @Component({
   selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink],
   templateUrl: './consultation-detail-page.component.html', styleUrls: ['../consultation-theme.css', './consultation-detail-page.component.css'],
@@ -28,8 +30,8 @@ export class ConsultationDetailPageComponent implements OnInit {
   protected readonly sessionRole = this.session.role;
 
   ngOnInit(): void {
-    const appointmentId = Number(this.route.snapshot.paramMap.get('appointmentId'));
-    if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+    const appointmentId = this.route.snapshot.paramMap.get('appointmentId') ?? '';
+    if (!UUID_PATTERN.test(appointmentId)) {
       this.error.set('El identificador de la cita no es válido.');
       this.loading.set(false);
       return;
@@ -47,7 +49,7 @@ export class ConsultationDetailPageComponent implements OnInit {
 
     request.subscribe({
       next: (page) => {
-        const item = page.data.find((candidate) => candidate.id === String(appointmentId));
+        const item = page.data.find((candidate) => candidate.id === appointmentId);
         if (!item) {
           this.error.set('No se encontró la cita en tu historial autorizado.');
           this.loading.set(false);

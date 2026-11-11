@@ -30,6 +30,8 @@
 .form-error { margin-bottom: 1rem; padding: 1rem 1.1rem; border: 1px solid #fecaca; border-radius: var(--radius-md); background: #fffafa; color: var(--color-danger-text); }
 .form-error strong { display: block; margin-bottom: .25rem; }
 .form-error p { margin: 0; font-size: .85rem; }
+.form-error .btn { margin-top: .75rem; }
+.form-notice { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; padding: .85rem 1.1rem; border: 1px solid var(--color-primary-soft); border-radius: var(--radius-md); color: var(--color-text-muted, inherit); font-size: .9rem; }
 .success-card { display: flex; align-items: flex-start; gap: 1rem; padding: 1.6rem; border: 1px solid #bbf7d0; border-radius: var(--radius-card); background: #f0fdf4; }
 .success-card__icon { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 46px; border-radius: 50%; background: #dcfce7; color: #166534; font-size: 1.3rem; font-weight: 800; }
 .success-card h2 { margin: .1rem 0 .4rem; color: #166534; font-size: 1.15rem; }

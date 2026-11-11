@@ -3,7 +3,8 @@ import { Observable, delay, of, throwError } from 'rxjs';
 import {
   ApiPage,
   AttentionSummary,
-  CreateAttentionPayload,
+  Consultation,
+  RecordAttentionPayload,
 } from '../app/consultation/model/consultation.models';
 import {
   MOCK_APPOINTMENTS,
@@ -102,15 +103,51 @@ export class ApiClientService {
       return found as unknown as T;
     }
 
-    // ── POST /consultations/attention ──
-    if (path === '/consultations/attention' && body) {
-      return this.createAttention(body as CreateAttentionPayload) as unknown as T;
+    // ── POST /consultations (DEC-006) ──
+    if (path === '/consultations' && body) {
+      return { data: this.startConsultation((body as { appointmentId: string }).appointmentId) } as unknown as T;
+    }
+
+    // ── POST /consultations/:id/attention ──
+    const record = path.match(/^\/consultations\/([0-9a-f-]{36})\/attention$/);
+    if (record && body) {
+      return { data: this.recordAttention(record[1], body as RecordAttentionPayload) } as unknown as T;
     }
 
     throw this.notFound(`Mock route not implemented: ${path}`);
   }
 
-  private createAttention(payload: CreateAttentionPayload): AttentionSummary {
+  private readonly consultations = new Map<string, Consultation>();
+
+  private startConsultation(appointmentId: string): Consultation {
+    const existing = [...this.consultations.values()].find((c) => c.appointmentId === appointmentId);
+    if (existing) return existing;
+    const appointment = MOCK_APPOINTMENTS.find((a) => a.id === appointmentId);
+    if (!appointment) throw this.notFound(`Appointment ${appointmentId} not found in fixtures`);
+    const now = new Date().toISOString();
+    const created: Consultation = {
+      id: crypto.randomUUID(),
+      appointmentId,
+      patientId: appointment.patientId,
+      professionalId: appointment.professionalId,
+      status: 'IN_PROGRESS',
+      completedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.consultations.set(created.id, created);
+    return created;
+  }
+
+  private recordAttention(consultationId: string, payload: RecordAttentionPayload): AttentionSummary {
+    const consultation = this.consultations.get(consultationId);
+    if (!consultation) throw this.notFound(`Consultation ${consultationId} not found`);
+    const now = new Date().toISOString();
+    this.consultations.set(consultationId, { ...consultation, status: 'COMPLETED', completedAt: now, updatedAt: now });
+    return this.createAttention(payload);
+  }
+
+  private createAttention(payload: RecordAttentionPayload): AttentionSummary {
     const nextId = 'f0000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0'); // Generación rápida de UUID falso 'f0000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0'); // Generación rápida de UUID falso Math.max(0, ...Object.keys(MOCK_ATTENTIONS).map(Number)) + 1;
     const created: AttentionSummary = {
       id: nextId,
