@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
 import { Appointment, AttentionSummary, Consultation, MedicationDTO, PreconsultationSummary, RecordAttentionPayload } from '../model/consultation.models';
@@ -20,6 +21,7 @@ export class AttentionFormPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly session = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly professionalId = getSessionContext(this.session).id;
 
   protected readonly loading = signal(true);
@@ -70,6 +72,7 @@ export class AttentionFormPageComponent implements OnInit {
           this.loadError.set('Solo se puede registrar atención para una cita confirmada o reprogramada.');
         } else {
           this.appointment.set(item);
+          this.directory.resolvePatients([item.patientId]);
           this.startConsultation(item.id);
         }
         this.loading.set(false);

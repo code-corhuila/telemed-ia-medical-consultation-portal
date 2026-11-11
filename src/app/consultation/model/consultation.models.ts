@@ -101,3 +101,18 @@ export interface ApiError {
   traceId?: string;
   details?: ReadonlyArray<{ field: string; message: string }>;
 }
+
+/** One row of GET /api/v1/professionals (professional-management). */
+export interface ProfessionalListItem {
+  id: string;
+  identityUserId: string;
+  fullName?: string | null;
+  professionalType: string;
+  status: string;
+}
+
+/** GET /api/v1/auth/accounts/names (identity DEC-013). */
+export interface AccountName {
+  id: string;
+  fullName: string;
+}
