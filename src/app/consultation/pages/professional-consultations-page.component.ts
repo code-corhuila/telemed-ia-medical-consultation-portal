@@ -11,7 +11,7 @@ type QueueFilter = 'ALL' | 'TO_ATTEND' | 'COMPLETED';
 
 @Component({
   selector: 'app-professional-consultations-page', standalone: true, imports: [DatePipe, RouterLink],
-  templateUrl: './professional-consultations-page.component.html', styleUrl: './professional-consultations-page.component.css',
+  templateUrl: './professional-consultations-page.component.html', styleUrls: ['../consultation-theme.css', './professional-consultations-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfessionalConsultationsPageComponent implements OnInit {
