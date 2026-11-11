@@ -48,6 +48,7 @@
             <div><dt>Síntomas detallados</dt><dd>{{ pre.detailedSymptoms || 'No registrado' }}</dd></div>
             <div><dt>Antecedentes relevantes</dt><dd>{{ pre.relevantHistory || 'No registrados' }}</dd></div>
           </dl>
+        } @else if (preconsultationCompleted()) { <p class="muted-copy">Completaste la preconsulta. Su resumen lo ve tu profesional de salud antes de atenderte.</p>
         } @else { <p class="muted-copy">No hay un resumen de preconsulta disponible para esta cita.</p> }
       </article>
 
