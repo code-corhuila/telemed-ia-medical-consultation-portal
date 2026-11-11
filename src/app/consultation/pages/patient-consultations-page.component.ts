@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { SpanishDatePipe } from '../pipes/spanish-date.pipe';
 import { RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
 import { PeopleDirectoryService } from '../data/people-directory.service';
@@ -13,7 +14,7 @@ type HistoryFilter = 'ALL' | 'AVAILABLE' | 'PENDING';
 @Component({
   selector: 'app-patient-consultations-page',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, SpanishDatePipe],
   templateUrl: './patient-consultations-page.component.html',
   styleUrls: ['../consultation-theme.css', './patient-consultations-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
