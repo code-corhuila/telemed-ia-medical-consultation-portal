@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { SpanishDatePipe } from '../pipes/spanish-date.pipe';
 import { RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
 import { PeopleDirectoryService } from '../data/people-directory.service';
@@ -11,7 +12,7 @@ import { SessionService } from 'shell/session';
 type QueueFilter = 'ALL' | 'TO_ATTEND' | 'COMPLETED';
 
 @Component({
-  selector: 'app-professional-consultations-page', standalone: true, imports: [DatePipe, RouterLink],
+  selector: 'app-professional-consultations-page', standalone: true, imports: [DatePipe, RouterLink, SpanishDatePipe],
   templateUrl: './professional-consultations-page.component.html', styleUrls: ['../consultation-theme.css', './professional-consultations-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
