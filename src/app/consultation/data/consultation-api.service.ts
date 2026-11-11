@@ -55,10 +55,6 @@ export class ConsultationApiService {
     );
   }
 
-  getPreconsultation(id: string): Observable<PreconsultationSummary> {
-    return this.api.get<PreconsultationSummary>(`/consultations/preconsultation/${id}`);
-  }
-
   /** The attention of a consultation; the API allows only its patient, its professional and document-generation. */
   getAttention(consultationId: string): Observable<AttentionSummary> {
     return this.api
