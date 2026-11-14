@@ -1,7 +1,7 @@
 import { SessionService } from 'shell/session';
 
 export interface SessionContext {
-  readonly id: number | null;
+  readonly id: string | null;
   readonly role: string | null;
   readonly name: string;
 }

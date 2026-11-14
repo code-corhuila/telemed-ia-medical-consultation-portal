@@ -3,13 +3,15 @@ import { Observable, delay, of, throwError } from 'rxjs';
 import {
   ApiPage,
   AttentionSummary,
-  CreateAttentionPayload,
+  Consultation,
+  RecordAttentionPayload,
 } from '../app/consultation/model/consultation.models';
 import {
   MOCK_APPOINTMENTS,
   MOCK_ATTENTIONS,
+  MOCK_PATIENT_NAMES,
+  MOCK_PROFESSIONALS,
   MOCK_POST_SUMMARIES,
-  MOCK_PRECONSULTATIONS,
   makePage,
 } from './fixtures/consultation.fixtures';
 
@@ -51,11 +53,26 @@ export class ApiClientService {
     params: Record<string, unknown> | null,
     body: unknown,
   ): T {
+    // ── GET /professionals ──
+    if (path === '/professionals') {
+      return { data: MOCK_PROFESSIONALS } as unknown as T;
+    }
+
+    // ── GET /auth/accounts/names?ids=… ──
+    if (path === '/auth/accounts/names') {
+      const ids = String(params?.['ids'] ?? '').split(',');
+      return {
+        data: ids
+          .filter((id) => id in MOCK_PATIENT_NAMES)
+          .map((id) => ({ id, fullName: MOCK_PATIENT_NAMES[id] })),
+      } as unknown as T;
+    }
+
     // ── GET /appointments/patient/:id ──
     const byPatient = path.match(/^\/appointments\/patient\/(\d+)/);
     if (byPatient) {
       const patientId = Number(byPatient[1]);
-      const items = MOCK_APPOINTMENTS.filter((a) => a.patientId === patientId);
+      const items = MOCK_APPOINTMENTS.filter((a) => a.patientId === String(patientId));
       return makePage(
         items,
         this.asNumber(params?.['page'], 1),
@@ -67,7 +84,7 @@ export class ApiClientService {
     const byProfessional = path.match(/^\/appointments\/professional\/(\d+)/);
     if (byProfessional) {
       const professionalId = Number(byProfessional[1]);
-      const items = MOCK_APPOINTMENTS.filter((a) => a.professionalId === professionalId);
+      const items = MOCK_APPOINTMENTS.filter((a) => a.professionalId === String(professionalId));
       return makePage(
         items,
         this.asNumber(params?.['page'], 1),
@@ -75,52 +92,78 @@ export class ApiClientService {
       ) as unknown as T;
     }
 
-    // ── GET /consultations/preconsultation/:id ──
-    const preconsult = path.match(/^\/consultations\/preconsultation\/(\d+)/);
-    if (preconsult) {
-      const id = Number(preconsult[1]);
-      const found = MOCK_PRECONSULTATIONS[id];
-      if (!found) throw this.notFound(`Preconsultation ${id} not found in fixtures`);
-      return found as unknown as T;
+    // ── GET /consultations/:consultationId/attention ──
+    const attention = path.match(/^\/consultations\/([0-9a-f-]{36})\/attention$/);
+    if (attention && !body) {
+      const found = Object.values(MOCK_ATTENTIONS).find((a) => a.consultationId === attention[1]);
+      if (!found) throw this.notFound(`Attention of consultation ${attention[1]} not found in fixtures`);
+      return { data: found } as unknown as T;
     }
 
-    // ── GET /consultations/attention/:id ──
-    const attention = path.match(/^\/consultations\/attention\/(\d+)/);
-    if (attention) {
-      const id = Number(attention[1]);
-      const found = MOCK_ATTENTIONS[id];
-      if (!found) throw this.notFound(`Attention ${id} not found in fixtures`);
-      return found as unknown as T;
-    }
-
-    // ── GET /consultations/post/:id ──
-    const post = path.match(/^\/consultations\/post\/(\d+)/);
+    // ── GET /consultations/post-summaries/:id ──
+    const post = path.match(/^\/consultations\/post-summaries\/([0-9a-f-]+)$/);
     if (post) {
-      const id = Number(post[1]);
-      const found = MOCK_POST_SUMMARIES[id];
-      if (!found) throw this.notFound(`Post summary ${id} not found in fixtures`);
-      return found as unknown as T;
+      const found = Object.values(MOCK_POST_SUMMARIES).find((s) => s.id === post[1]);
+      if (!found) throw this.notFound(`Post summary ${post[1]} not found in fixtures`);
+      return { data: found } as unknown as T;
     }
 
-    // ── POST /consultations/attention ──
-    if (path === '/consultations/attention' && body) {
-      return this.createAttention(body as CreateAttentionPayload) as unknown as T;
+    // ── POST /consultations (DEC-006) ──
+    if (path === '/consultations' && body) {
+      return { data: this.startConsultation((body as { appointmentId: string }).appointmentId) } as unknown as T;
+    }
+
+    // ── POST /consultations/:id/attention ──
+    const record = path.match(/^\/consultations\/([0-9a-f-]{36})\/attention$/);
+    if (record && body) {
+      return { data: this.recordAttention(record[1], body as RecordAttentionPayload) } as unknown as T;
     }
 
     throw this.notFound(`Mock route not implemented: ${path}`);
   }
 
-  private createAttention(payload: CreateAttentionPayload): AttentionSummary {
-    const nextId = Math.max(0, ...Object.keys(MOCK_ATTENTIONS).map(Number)) + 1;
+  private readonly consultations = new Map<string, Consultation>();
+
+  private startConsultation(appointmentId: string): Consultation {
+    const existing = [...this.consultations.values()].find((c) => c.appointmentId === appointmentId);
+    if (existing) return existing;
+    const appointment = MOCK_APPOINTMENTS.find((a) => a.id === appointmentId);
+    if (!appointment) throw this.notFound(`Appointment ${appointmentId} not found in fixtures`);
+    const now = new Date().toISOString();
+    const created: Consultation = {
+      id: crypto.randomUUID(),
+      appointmentId,
+      patientId: appointment.patientId,
+      professionalId: appointment.professionalId,
+      status: 'IN_PROGRESS',
+      completedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.consultations.set(created.id, created);
+    return created;
+  }
+
+  private recordAttention(consultationId: string, payload: RecordAttentionPayload): AttentionSummary {
+    const consultation = this.consultations.get(consultationId);
+    if (!consultation) throw this.notFound(`Consultation ${consultationId} not found`);
+    const now = new Date().toISOString();
+    this.consultations.set(consultationId, { ...consultation, status: 'COMPLETED', completedAt: now, updatedAt: now });
+    return this.createAttention(consultationId, payload);
+  }
+
+  private createAttention(consultationId: string, payload: RecordAttentionPayload): AttentionSummary {
+    const nextId = 'f0000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0'); // Generación rápida de UUID falso 'f0000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0'); // Generación rápida de UUID falso Math.max(0, ...Object.keys(MOCK_ATTENTIONS).map(Number)) + 1;
     const created: AttentionSummary = {
       id: nextId,
+      consultationId,
       diagnosis: payload.diagnosis,
       recommendations: payload.recommendations,
       medications: payload.medications,
       observations: payload.observations,
       referral: payload.referral,
     };
-    MOCK_ATTENTIONS[nextId] = created;
+    MOCK_ATTENTIONS[nextId as any] = created;
     return created;
   }
 

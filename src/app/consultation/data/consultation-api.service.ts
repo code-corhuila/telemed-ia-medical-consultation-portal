@@ -1,13 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiClientService } from 'shell/apiClient';
 import {
+  AccountName,
   ApiPage,
   Appointment,
   AttentionSummary,
-  CreateAttentionPayload,
+  Consultation,
+  DataEnvelope,
   PostConsultationSummary,
   PreconsultationSummary,
+  ProfessionalListItem,
+  RecordAttentionPayload,
 } from '../model/consultation.models';
 
 /**
@@ -15,45 +19,69 @@ import {
  * and the /api/v1 gateway prefix stay centralized in the shell.
  *
  * Consultation paths follow the published consultation-service.yaml contract.
- * The gateway mapping and Go HTTP handlers are documented in
- * BACKEND_INTEGRATION_GAPS.md and must be implemented before these requests
- * work end-to-end.
  */
 @Injectable({ providedIn: 'root' })
 export class ConsultationApiService {
   private readonly api = inject(ApiClientService);
 
-  listByPatient(patientId: number, page = 1, limit = 100): Observable<ApiPage<Appointment>> {
+  listByPatient(patientId: string, page = 1, limit = 100): Observable<ApiPage<Appointment>> {
     return this.api.getWithParams<ApiPage<Appointment>>(
       `/appointments/patient/${patientId}`,
       { page, limit },
     );
   }
 
-  listByProfessional(professionalId: number, page = 1, limit = 100): Observable<ApiPage<Appointment>> {
+  listByProfessional(professionalId: string, page = 1, limit = 100): Observable<ApiPage<Appointment>> {
     return this.api.getWithParams<ApiPage<Appointment>>(
       `/appointments/professional/${professionalId}`,
       { page, limit },
     );
   }
 
-  getPreconsultation(id: number): Observable<PreconsultationSummary> {
-    return this.api.get<PreconsultationSummary>(`/consultations/preconsultation/${id}`);
+  /** Professionals with their names (professional-management, any authenticated role). */
+  listProfessionals(): Observable<ApiPage<ProfessionalListItem>> {
+    return this.api.getWithParams<ApiPage<ProfessionalListItem>>('/professionals', { page: 1, limit: 100 });
   }
 
-  getAttention(id: number): Observable<AttentionSummary> {
-    return this.api.get<AttentionSummary>(`/consultations/attention/${id}`);
+  /** Names of up to 50 accounts (identity DEC-013; a professional gets patients only). */
+  lookupAccountNames(ids: readonly string[]): Observable<{ data: AccountName[] }> {
+    return this.api.getWithParams<{ data: AccountName[] }>('/auth/accounts/names', { ids: ids.join(',') });
   }
 
-  getPostSummary(id: number): Observable<PostConsultationSummary> {
-    return this.api.get<PostConsultationSummary>(`/consultations/post/${id}`);
-  }
-
-  createAttention(payload: CreateAttentionPayload): Observable<AttentionSummary> {
-    return this.api.post<AttentionSummary>(
-      '/consultations/attention',
-      payload,
-      crypto.randomUUID(),
+  getPreconsultationSummary(appointmentId: string): Observable<PreconsultationSummary> {
+    return this.api.getWithParams<PreconsultationSummary>(
+      '/agent/preconsultations',
+      { appointmentId }
     );
+  }
+
+  /** The attention of a consultation; the API allows only its patient, its professional and document-generation. */
+  getAttention(consultationId: string): Observable<AttentionSummary> {
+    return this.api
+      .get<DataEnvelope<AttentionSummary>>(`/consultations/${consultationId}/attention`)
+      .pipe(map((answer) => answer.data));
+  }
+
+  getPostSummary(id: string): Observable<PostConsultationSummary> {
+    return this.api
+      .get<DataEnvelope<PostConsultationSummary>>(`/consultations/post-summaries/${id}`)
+      .pipe(map((answer) => answer.data));
+  }
+
+  /**
+   * Creates the consultation of an appointment, or returns the existing one (DEC-006).
+   * Calling it again for the same appointment is safe.
+   */
+  startConsultation(appointmentId: string): Observable<Consultation> {
+    return this.api
+      .post<DataEnvelope<Consultation>>('/consultations', { appointmentId }, crypto.randomUUID())
+      .pipe(map((answer) => answer.data));
+  }
+
+  /** Records the attention; the consultation becomes COMPLETED. */
+  recordAttention(consultationId: string, payload: RecordAttentionPayload): Observable<AttentionSummary> {
+    return this.api
+      .post<DataEnvelope<AttentionSummary>>(`/consultations/${consultationId}/attention`, payload, crypto.randomUUID())
+      .pipe(map((answer) => answer.data));
   }
 }

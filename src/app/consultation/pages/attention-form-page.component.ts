@@ -3,15 +3,16 @@ import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
-import { getErrorMessage } from '../data/error-message';
-import { Appointment, AttentionSummary, CreateAttentionPayload } from '../model/consultation.models';
+import { errorCode, getErrorMessage } from '../data/error-message';
+import { Appointment, AttentionSummary, Consultation, MedicationDTO, PreconsultationSummary, RecordAttentionPayload } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
 @Component({
   selector: 'app-attention-form-page', standalone: true,
   imports: [DatePipe, ReactiveFormsModule, RouterLink],
-  templateUrl: './attention-form-page.component.html', styleUrl: './attention-form-page.component.css',
+  templateUrl: './attention-form-page.component.html', styleUrls: ['../consultation-theme.css', './attention-form-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AttentionFormPageComponent implements OnInit {
@@ -20,11 +21,19 @@ export class AttentionFormPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly session = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly professionalId = getSessionContext(this.session).id;
 
   protected readonly loading = signal(true);
+  protected readonly preconsultationLoading = signal(true);
+  protected readonly preconsultationData = signal<PreconsultationSummary | null>(null);
+  protected readonly preconsultationError = signal<string | null>(null);
+  /** The patient has not done the pre-consultation: an empty state, not an error. */
+  protected readonly preconsultationMissing = signal(false);
   protected readonly loadError = signal<string | null>(null);
   protected readonly appointment = signal<Appointment | null>(null);
+  protected readonly consultation = signal<Consultation | null>(null);
+  protected readonly consultationError = signal<string | null>(null);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
   protected readonly savedAttention = signal<AttentionSummary | null>(null);
@@ -43,8 +52,10 @@ export class AttentionFormPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const appointmentId = Number(this.route.snapshot.paramMap.get('appointmentId'));
-    if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+    const appointmentId = this.route.snapshot.paramMap.get('appointmentId');
+    const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (!appointmentId || !UUID_PATTERN.test(appointmentId)) {
       this.loadError.set('El identificador de la cita no es válido.');
       this.loading.set(false);
       return;
@@ -63,45 +74,87 @@ export class AttentionFormPageComponent implements OnInit {
           this.loadError.set('Solo se puede registrar atención para una cita confirmada o reprogramada.');
         } else {
           this.appointment.set(item);
+          this.directory.resolvePatients([item.patientId]);
+          this.startConsultation(item.id);
         }
         this.loading.set(false);
       },
       error: (error) => { this.loadError.set(getErrorMessage(error, 'No fue posible validar la cita asignada.')); this.loading.set(false); },
     });
+
+    // Fetch preconsultation summary
+    this.api.getPreconsultationSummary(appointmentId).subscribe({
+      next: (summary: PreconsultationSummary) => {
+        this.preconsultationData.set(summary);
+        this.preconsultationLoading.set(false);
+      },
+      error: (err: unknown) => {
+        const code = errorCode(err);
+        if (code === 'SUMMARY_NOT_FOUND') {
+          this.preconsultationMissing.set(true);
+        } else if (code === 'SERVICE_UNAVAILABLE') {
+          this.preconsultationError.set('El servicio de preconsulta no está disponible en este momento.');
+        } else {
+          this.preconsultationError.set('No se pudo cargar el resumen de preconsulta.');
+        }
+        this.preconsultationLoading.set(false);
+      }
+    });
+  }
+
+  /** DEC-006: opening the form starts (or reads) the consultation of the appointment. */
+  protected startConsultation(appointmentId: string): void {
+    this.consultation.set(null);
+    this.consultationError.set(null);
+    this.api.startConsultation(appointmentId).subscribe({
+      next: (consultation) => {
+        if (consultation.status === 'COMPLETED') {
+          this.consultationError.set('La atención de esta cita ya fue registrada.');
+        }
+        this.consultation.set(consultation);
+      },
+      error: (error) => this.consultationError.set(getErrorMessage(error, 'No fue posible iniciar la consulta.')),
+    });
+  }
+
+  protected canSave(): boolean {
+    return this.consultation()?.status === 'IN_PROGRESS' && !this.saving();
   }
 
   protected saveAttention(): void {
     this.submitted.set(true);
     this.form.markAllAsTouched();
-    if (this.form.invalid || this.saving() || !this.appointment()) return;
+    const consultation = this.consultation();
+    if (this.form.invalid || !this.canSave() || consultation === null) return;
 
     const value = this.form.getRawValue();
-    const medicationParts = [
-      value.medicationName ? `Medicamento: ${value.medicationName}` : '',
-      value.dosage ? `Dosis: ${value.dosage}` : '',
-      value.frequency ? `Frecuencia: ${value.frequency}` : '',
-      value.duration ? `Duración: ${value.duration}` : '',
-      value.medicationInstructions ? `Indicaciones: ${value.medicationInstructions}` : '',
-    ].filter(Boolean);
+    const medications: MedicationDTO[] = value.medicationName
+      ? [{
+          name: value.medicationName.trim(),
+          dosage: value.dosage?.trim() || undefined,
+          frequency: value.frequency?.trim() || undefined,
+          duration: value.duration?.trim() || undefined,
+          instructions: value.medicationInstructions?.trim() || undefined,
+        }]
+      : [];
 
-    const payload: CreateAttentionPayload = {
-      appointmentId: this.appointment()!.id,
+    const payload: RecordAttentionPayload = {
       diagnosis: value.diagnosis.trim(),
       recommendations: value.recommendations.trim(),
       observations: value.observations.trim() || undefined,
-      medications: medicationParts.join('\n') || undefined,
+      medications,
       referral: value.referral.trim() || undefined,
     };
 
     this.saving.set(true);
     this.saveError.set(null);
-    this.api.createAttention(payload).subscribe({
+    this.api.recordAttention(consultation.id, payload).subscribe({
       next: (attention) => {
         this.savedAttention.set(attention);
         this.saving.set(false);
       },
       error: (error) => {
-        this.saveError.set(getErrorMessage(error, 'No fue posible guardar la atención médica. Verifica que el endpoint del API esté implementado.'));
+        this.saveError.set(getErrorMessage(error, 'No fue posible guardar la atención médica.'));
         this.saving.set(false);
       },
     });

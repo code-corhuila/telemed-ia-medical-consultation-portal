@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { SpanishDatePipe } from '../pipes/spanish-date.pipe';
 import { RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
 import { getErrorMessage } from '../data/error-message';
 import { Appointment } from '../model/consultation.models';
@@ -12,14 +14,15 @@ type HistoryFilter = 'ALL' | 'AVAILABLE' | 'PENDING';
 @Component({
   selector: 'app-patient-consultations-page',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, SpanishDatePipe],
   templateUrl: './patient-consultations-page.component.html',
-  styleUrl: './patient-consultations-page.component.css',
+  styleUrls: ['../consultation-theme.css', './patient-consultations-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PatientConsultationsPageComponent implements OnInit {
   private readonly api = inject(ConsultationApiService);
   private readonly session = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly patientId = getSessionContext(this.session).id;
 
   protected readonly loading = signal(true);
@@ -49,15 +52,16 @@ export class PatientConsultationsPageComponent implements OnInit {
 
   protected load(): void {
     if (this.patientId === null) {
-      this.error.set('No se encontró un identificador numérico de paciente en la sesión.');
+      this.error.set('No se encontró un identificador de paciente en la sesión.');
       this.loading.set(false);
       return;
     }
     this.loading.set(true);
     this.error.set(null);
-    this.api.listByPatient(this.patientId).subscribe({
+    this.api.listByPatient(this.patientId as string).subscribe({
       next: (response) => {
         this.appointments.set(response.data ?? []);
+        this.directory.resolveProfessionals();
         this.loading.set(false);
       },
       error: (error) => {

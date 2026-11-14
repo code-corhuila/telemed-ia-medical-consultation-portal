@@ -1,35 +1,43 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { SpanishDatePipe } from '../pipes/spanish-date.pipe';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConsultationApiService } from '../data/consultation-api.service';
+import { PeopleDirectoryService } from '../data/people-directory.service';
 import { getSessionContext } from '../data/session-context';
-import { getErrorMessage } from '../data/error-message';
-import { Appointment, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
+import { errorCode, getErrorMessage } from '../data/error-message';
+import { Appointment, AttentionSummary, MedicationDTO, PostConsultationSummary, PreconsultationSummary } from '../model/consultation.models';
 import { SessionService } from 'shell/session';
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 @Component({
-  selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink],
-  templateUrl: './consultation-detail-page.component.html', styleUrl: './consultation-detail-page.component.css',
+  selector: 'app-consultation-detail-page', standalone: true, imports: [DatePipe, RouterLink, SpanishDatePipe],
+  templateUrl: './consultation-detail-page.component.html', styleUrls: ['../consultation-theme.css', './consultation-detail-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConsultationDetailPageComponent implements OnInit {
   private readonly api = inject(ConsultationApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly sessionService = inject(SessionService);
+  protected readonly directory = inject(PeopleDirectoryService);
   private readonly session = getSessionContext(this.sessionService);
 
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly appointment = signal<Appointment | null>(null);
   protected readonly postSummary = signal<PostConsultationSummary | null>(null);
+  protected readonly attention = signal<AttentionSummary | null>(null);
   protected readonly preconsultation = signal<PreconsultationSummary | null>(null);
+  protected readonly preconsultationCompleted = signal(false);
   protected readonly summaryLoading = signal(false);
   protected readonly summaryNotice = signal<string | null>(null);
   protected readonly sessionRole = this.session.role;
+  protected readonly sessionName = this.session.name;
 
   ngOnInit(): void {
-    const appointmentId = Number(this.route.snapshot.paramMap.get('appointmentId'));
-    if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+    const appointmentId = this.route.snapshot.paramMap.get('appointmentId') ?? '';
+    if (!UUID_PATTERN.test(appointmentId)) {
       this.error.set('El identificador de la cita no es válido.');
       this.loading.set(false);
       return;
@@ -54,6 +62,11 @@ export class ConsultationDetailPageComponent implements OnInit {
           return;
         }
         this.appointment.set(item);
+        if (isProfessional) {
+          this.directory.resolvePatients([item.patientId]);
+        } else {
+          this.directory.resolveProfessionals();
+        }
         this.loading.set(false);
         this.loadSummaries(item);
       },
@@ -67,33 +80,57 @@ export class ConsultationDetailPageComponent implements OnInit {
   private loadSummaries(appointment: Appointment): void {
     if (appointment.postSummaryId !== null) {
       this.summaryLoading.set(true);
-      this.api.getPostSummary(appointment.postSummaryId).subscribe({
+      this.api.getPostSummary(appointment.postSummaryId as string).subscribe({
         next: (summary) => {
           this.postSummary.set(summary);
-          this.preconsultation.set(summary.preconsultationSummary ?? null);
           this.summaryLoading.set(false);
-          if (!summary.preconsultationSummary && appointment.preconsultationSummaryId) {
-            this.loadPreconsultation(appointment.preconsultationSummaryId);
-          }
+          if (summary.attentionSummaryId) this.loadAttention(summary.consultationId);
+          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment);
         },
         error: (error) => {
           this.summaryNotice.set(getErrorMessage(error, 'El resumen posterior todavía no está disponible.'));
           this.summaryLoading.set(false);
-          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment.preconsultationSummaryId);
+          if (appointment.preconsultationSummaryId) this.loadPreconsultation(appointment);
         },
       });
     } else if (appointment.preconsultationSummaryId !== null) {
-      this.loadPreconsultation(appointment.preconsultationSummaryId);
+      this.loadPreconsultation(appointment);
       this.summaryNotice.set('La cita aún no tiene un resumen posterior asociado.');
     } else {
       this.summaryNotice.set('Esta cita no tiene una referencia de preconsulta ni un resumen posterior asociado.');
     }
   }
 
-  private loadPreconsultation(id: number): void {
-    this.api.getPreconsultation(id).subscribe({
+  private loadAttention(consultationId: string): void {
+    this.api.getAttention(consultationId).subscribe({
+      next: (attention) => this.attention.set(attention),
+      error: (error) => this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar la atención profesional.')),
+    });
+  }
+
+  /** One line per medication: name, then dose, frequency, duration and instructions when recorded. */
+  protected medicationLines(medications: MedicationDTO[] | undefined): string {
+    return (medications ?? [])
+      .map((m) => [m.name, m.dosage, m.frequency, m.duration, m.instructions].filter((part) => !!part).join(' · '))
+      .join('\n');
+  }
+
+  /**
+   * The agent shows the pre-consultation summary to the appointment's professional only
+   * (GET /agent/preconsultations?appointmentId=); the patient sees that it was completed.
+   */
+  private loadPreconsultation(appointment: Appointment): void {
+    if (this.session.role !== 'PROFESSIONAL') {
+      this.preconsultationCompleted.set(true);
+      return;
+    }
+    this.api.getPreconsultationSummary(appointment.id).subscribe({
       next: (summary) => this.preconsultation.set(summary),
-      error: (error) => this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar el resumen de preconsulta.')),
+      error: (error) => {
+        if (errorCode(error) !== 'SUMMARY_NOT_FOUND') {
+          this.summaryNotice.set(getErrorMessage(error, 'No fue posible cargar el resumen de preconsulta.'));
+        }
+      },
     });
   }
 

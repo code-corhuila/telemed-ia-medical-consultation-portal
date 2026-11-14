@@ -1,14 +1,14 @@
 export type AppointmentStatus = 'CONFIRMED' | 'RESCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
 export interface Appointment {
-  id: number;
-  patientId: number;
-  professionalId: number;
+  id: string;
+  patientId: string;
+  professionalId: string;
   start: string;
   end: string;
   status: AppointmentStatus;
-  preconsultationSummaryId: number | null;
-  postSummaryId: number | null;
+  preconsultationSummaryId: string | null;
+  postSummaryId: string | null;
   cancellationReason?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -27,43 +27,78 @@ export interface ApiPage<T> {
 }
 
 export interface PreconsultationSummary {
-  id: number;
+  id: string;
+  conversationId: string;
+  appointmentId: string;
+  patientId: string;
   consultationReason: string;
-  evolutionTime?: string;
+  evolutionTime: string | null;
   detailedSymptoms: string;
-  relevantHistory?: string;
+  relevantHistory: string | null;
+  createdAt: string;
+}
+
+export interface MedicationDTO {
+  name: string;
+  dosage?: string;
+  frequency?: string;
+  duration?: string;
+  instructions?: string;
 }
 
 export interface AttentionSummary {
-  id: number;
+  id: string;
+  consultationId: string;
   diagnosis: string;
   recommendations: string;
-  medications?: string;
+  medications?: MedicationDTO[];
   observations?: string;
   referral?: string;
 }
 
+/** GET /consultations/post-summaries/{id}: references only; the attention is read by consultation. */
 export interface PostConsultationSummary {
-  id: number;
-  preconsultationSummary?: PreconsultationSummary;
-  attentionSummary?: AttentionSummary;
+  id: string;
+  consultationId: string;
+  appointmentId: string;
+  patientId: string;
+  preconsultationSummaryId?: string;
+  attentionSummaryId?: string;
+  professionalId?: string;
+  completedAt?: string;
   generatedAt: string;
 }
 
-/** This shape follows consultation-service.yaml as published in governance. */
-export interface CreateAttentionPayload {
-  appointmentId: number;
+/** Consultation of one appointment (consultation DEC-006). */
+export interface Consultation {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  professionalId: string;
+  status: 'IN_PROGRESS' | 'COMPLETED';
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** The consultation API wraps every success answer in `data`. */
+export interface DataEnvelope<T> {
+  data: T;
+}
+
+/** Body of POST /consultations/{id}/attention. `medications` is always an array. */
+export interface RecordAttentionPayload {
   diagnosis: string;
   recommendations: string;
-  medications?: string;
+  medications: MedicationDTO[];
   observations?: string;
   referral?: string;
 }
 
 export interface GeneratePostSummaryPayload {
-  appointmentId: number;
-  preconsultationSummaryId: number;
-  attentionSummaryId: number;
+  appointmentId: string;
+  preconsultationSummaryId: string;
+  attentionSummaryId: string;
 }
 
 export interface ApiError {
@@ -72,4 +107,19 @@ export interface ApiError {
   message: string;
   traceId?: string;
   details?: ReadonlyArray<{ field: string; message: string }>;
+}
+
+/** One row of GET /api/v1/professionals (professional-management). */
+export interface ProfessionalListItem {
+  id: string;
+  identityUserId: string;
+  fullName?: string | null;
+  professionalType: string;
+  status: string;
+}
+
+/** GET /api/v1/auth/accounts/names (identity DEC-013). */
+export interface AccountName {
+  id: string;
+  fullName: string;
 }

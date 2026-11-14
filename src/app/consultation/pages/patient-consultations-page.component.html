@@ -49,9 +49,9 @@
             <h2>Consulta médica</h2>
             <p class="consultation-card__date">
               <span aria-hidden="true">▦</span>
-              {{ appointment.start | date:'EEEE, d MMMM y · HH:mm' }}
+              {{ appointment.start | spanishDate:'long' }} · {{ appointment.start | date:'HH:mm' }}
             </p>
-            <p class="consultation-card__metadata">Profesional asignado #{{ appointment.professionalId }}</p>
+            <p class="consultation-card__metadata">{{ directory.professionalName(appointment.professionalId) }}</p>
           </div>
           <div class="consultation-card__actions">
             @if (appointment.postSummaryId !== null) {
